@@ -1,0 +1,6 @@
+iata_code,name,city,country,latitude,longitude,timezone
+WAW,Warsaw Chopin Airport,Warsaw,Poland,52.1657,20.9671,Europe/Warsaw
+KRK,Kraków Airport,Kraków,Poland,50.0777,19.7848,Europe/Warsaw
+BCN,Barcelona El Prat,Barcelona,Spain,41.2974,2.0833,Europe/Madrid
+CDG,Paris Charles de Gaulle,Paris,France,49.0097,2.5479,Europe/Paris
+LHR,London Heathrow,London,United Kingdom,51.4700,-0.4543,Europe/London

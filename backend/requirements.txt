@@ -1,0 +1,12 @@
+# requirements.txt
+fastapi>=0.104.0
+uvicorn>=0.23.2
+pydantic>=2.4.2
+sqlalchemy>=2.0.23
+pandas>=2.1.1
+astropy>=5.3.4  # Biblioteka do obliczeń astronomicznych
+skyfield>=1.46.0  # Alternatywna biblioteka do obliczeń pozycji ciał niebieskich
+pytz>=2023.3.post1  # Obsługa stref czasowych
+python-dotenv>=1.0.0  # Obsługa zmiennych środowiskowych
+httpx>=0.25.0  # Klient HTTP dla integracji z zewnętrznymi API
+pytest>=7.4.3  # Testy
