@@ -1,177 +1,148 @@
 // components/sections/SearchFormSection.js
-import React, { useRef } from "react";
-import { MapPin, Calendar, Clock } from "lucide-react";
-import AirportSearch from "../ui/AirportSearch";
-import SunPreferenceSelector from "../ui/SunPreferenceSelector";
-import { useFlightForm } from "../../context/FlightFormContext";
-import { useAirportSearch } from "../../hooks/useAirportSearch";
+import React, { useState, useEffect } from "react";
+import { Sunrise, Sunset } from "lucide-react";
 
-const SearchFormSection = ({ onResultsAvailable }) => {
-  const {
-    departureAirport,
-    setDepartureAirport,
-    arrivalAirport,
-    setArrivalAirport,
-    departureDate,
-    setDepartureDate,
-    departureTime,
-    setDepartureTime,
-    sunPreference,
-    setSunPreference,
-    searching,
-    formErrors,
-    handleSubmit,
-    results,
-  } = useFlightForm();
+const SearchFormSection = ({ onSubmit, searching }) => {
+  const [departureAirport, setDepartureAirport] = useState("");
+  const [arrivalAirport, setArrivalAirport] = useState("");
+  const [departureDate, setDepartureDate] = useState("");
+  const [departureTime, setDepartureTime] = useState("");
+  const [sunPreference, setSunPreference] = useState("sunset");
 
-  const departureSearchHook = useAirportSearch();
-  const arrivalSearchHook = useAirportSearch();
+  // Inicjalizacja daty i czasu
+  useEffect(() => {
+    const now = new Date();
+    const tomorrow = new Date(now);
+    tomorrow.setDate(now.getDate() + 1);
 
-  // Efekt dla przewijania do wyników
-  React.useEffect(() => {
-    if (results && !searching && onResultsAvailable) {
-      onResultsAvailable();
+    const formattedDate = tomorrow.toISOString().split("T")[0];
+    setDepartureDate(formattedDate);
+
+    const hours = String(10).padStart(2, "0");
+    const minutes = String(0).padStart(2, "0");
+    setDepartureTime(`${hours}:${minutes}`);
+  }, []);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+
+    if (!departureAirport || !arrivalAirport) return;
+
+    if (onSubmit) {
+      onSubmit({
+        departureAirport,
+        arrivalAirport,
+        departureDate,
+        departureTime,
+        sunPreference,
+      });
     }
-  }, [results, searching, onResultsAvailable]);
+  };
 
   return (
-    <div className="bg-white/80 backdrop-blur-md rounded-2xl shadow-xl max-w-2xl w-full mx-auto p-8">
-      <h2 className="text-3xl font-bold text-center mb-8 text-indigo-800">
-        Zaplanuj swój widok
-      </h2>
+    <div className="bg-white rounded-lg shadow-sm p-8 max-w-xl w-full mx-auto">
+      <h2 className="text-xl font-medium text-gray-900 mb-6">Wyszukaj lot</h2>
 
-      <div className="space-y-6">
-        {/* Lotniska */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <AirportSearch
-            value={departureAirport}
-            onChange={(value) => {
-              setDepartureAirport(value);
-              departureSearchHook.handleSearch(value);
-            }}
-            onSelect={(airport) => {
-              setDepartureAirport(airport.code);
-              departureSearchHook.hideResults();
-            }}
-            placeholder="Kod lub miasto"
-            label="Lotnisko wylotu"
-            icon={<MapPin size={16} className="mr-1 text-indigo-600" />}
-            error={formErrors.departureAirport}
-            searchResults={departureSearchHook.searchResults}
-            showResults={departureSearchHook.showResults}
-          />
+      <form onSubmit={handleSubmit} className="space-y-5">
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Lotnisko wylotu
+            </label>
+            <input
+              type="text"
+              value={departureAirport}
+              onChange={(e) => setDepartureAirport(e.target.value)}
+              placeholder="Kod IATA, np. WAW"
+              className="w-full p-2 border border-gray-300 rounded focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+              required
+            />
+          </div>
 
-          <AirportSearch
-            value={arrivalAirport}
-            onChange={(value) => {
-              setArrivalAirport(value);
-              arrivalSearchHook.handleSearch(value);
-            }}
-            onSelect={(airport) => {
-              setArrivalAirport(airport.code);
-              arrivalSearchHook.hideResults();
-            }}
-            placeholder="Kod lub miasto"
-            label="Lotnisko przylotu"
-            icon={<MapPin size={16} className="mr-1 text-indigo-600" />}
-            error={formErrors.arrivalAirport}
-            searchResults={arrivalSearchHook.searchResults}
-            showResults={arrivalSearchHook.showResults}
-          />
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Lotnisko przylotu
+            </label>
+            <input
+              type="text"
+              value={arrivalAirport}
+              onChange={(e) => setArrivalAirport(e.target.value)}
+              placeholder="Kod IATA, np. LHR"
+              className="w-full p-2 border border-gray-300 rounded focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+              required
+            />
+          </div>
         </div>
 
-        {/* Data i czas */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium mb-2 text-gray-700">
-              <div className="flex items-center">
-                <Calendar size={16} className="mr-1 text-indigo-600" />
-                Data wylotu
-              </div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Data wylotu
             </label>
             <input
               type="date"
               value={departureDate}
               onChange={(e) => setDepartureDate(e.target.value)}
-              className={`w-full p-3 border ${
-                formErrors.departureDate
-                  ? "border-red-300 focus:ring-red-500 focus:border-red-500"
-                  : "border-gray-300 focus:ring-indigo-500 focus:border-indigo-500"
-              } rounded-lg focus:ring-2 transition-colors`}
+              className="w-full p-2 border border-gray-300 rounded focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+              required
             />
-            {formErrors.departureDate && (
-              <p className="mt-1 text-sm text-red-600">
-                {formErrors.departureDate}
-              </p>
-            )}
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2 text-gray-700">
-              <div className="flex items-center">
-                <Clock size={16} className="mr-1 text-indigo-600" />
-                Czas wylotu
-              </div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Czas wylotu
             </label>
             <input
               type="time"
               value={departureTime}
               onChange={(e) => setDepartureTime(e.target.value)}
-              className={`w-full p-3 border ${
-                formErrors.departureTime
-                  ? "border-red-300 focus:ring-red-500 focus:border-red-500"
-                  : "border-gray-300 focus:ring-indigo-500 focus:border-indigo-500"
-              } rounded-lg focus:ring-2 transition-colors`}
+              className="w-full p-2 border border-gray-300 rounded focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+              required
             />
-            {formErrors.departureTime && (
-              <p className="mt-1 text-sm text-red-600">
-                {formErrors.departureTime}
-              </p>
-            )}
           </div>
         </div>
 
-        {/* Preferencja słońca */}
-        <SunPreferenceSelector
-          value={sunPreference}
-          onChange={setSunPreference}
-        />
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Preferencja
+          </label>
+          <div className="grid grid-cols-2 gap-4">
+            <button
+              type="button"
+              className={`flex items-center justify-center py-2 px-4 border rounded ${
+                sunPreference === "sunrise"
+                  ? "bg-amber-50 border-amber-200 text-amber-700"
+                  : "bg-white border-gray-300 text-gray-700"
+              }`}
+              onClick={() => setSunPreference("sunrise")}
+            >
+              <Sunrise size={18} className="mr-2" />
+              Wschód słońca
+            </button>
 
-        {/* Przycisk wyszukiwania */}
+            <button
+              type="button"
+              className={`flex items-center justify-center py-2 px-4 border rounded ${
+                sunPreference === "sunset"
+                  ? "bg-orange-50 border-orange-200 text-orange-700"
+                  : "bg-white border-gray-300 text-gray-700"
+              }`}
+              onClick={() => setSunPreference("sunset")}
+            >
+              <Sunset size={18} className="mr-2" />
+              Zachód słońca
+            </button>
+          </div>
+        </div>
+
         <button
-          onClick={handleSubmit}
-          disabled={searching}
-          className="w-full py-4 px-6 bg-indigo-600 text-white font-medium rounded-lg shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center"
+          type="submit"
+          disabled={searching || !departureAirport || !arrivalAirport}
+          className="w-full py-2 bg-indigo-500 text-white rounded hover:bg-indigo-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {searching ? (
-            <>
-              <svg
-                className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                ></circle>
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                ></path>
-              </svg>
-              Trwa wyszukiwanie...
-            </>
-          ) : (
-            "Znajdź najlepsze miejsce"
-          )}
+          {searching ? "Wyszukiwanie..." : "Wyszukaj"}
         </button>
-      </div>
+      </form>
     </div>
   );
 };
