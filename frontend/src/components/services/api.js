@@ -2,57 +2,39 @@
 /**
  * Serwis obsługujący komunikację z API
  */
-const API_BASE_URL = "https://api.sunflight.example";
+const API_BASE_URL = "http://localhost:8000/api/v1";
 
 export const fetchSeatRecommendation = async (flightData) => {
   try {
-    // W rzeczywistej aplikacji wykonywalibyśmy tutaj faktyczne zapytanie API
-    // return await fetch(`${API_BASE_URL}/calculate-seat`, {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify(flightData)
-    // }).then(res => res.json());
-
-    // Symulacja odpowiedzi API
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({
-          departure_airport: {
-            code: flightData.departure_airport,
-            name: "Warsaw Chopin Airport",
-            city: "Warsaw",
-            country: "Poland",
-            latitude: 52.1657,
-            longitude: 20.9671,
-            timezone: "Europe/Warsaw",
-          },
-          arrival_airport: {
-            code: flightData.arrival_airport,
-            name: "Charles de Gaulle Airport",
-            city: "Paris",
-            country: "France",
-            latitude: 49.0097,
-            longitude: 2.5479,
-            timezone: "Europe/Paris",
-          },
-          departure_time: `${flightData.departure_date}T${flightData.departure_time}:00`,
-          arrival_time: `${flightData.departure_date}T${
-            parseInt(flightData.departure_time.split(":")[0]) + 2
-          }:${flightData.departure_time.split(":")[1]}:00`,
-          flight_duration: 2.3,
-          recommendation: {
-            seat_code: "A15",
-            seat_side: "lewa strona samolotu",
-            best_time: `${flightData.departure_date}T${
-              parseInt(flightData.departure_time.split(":")[0]) + 1
-            }:${flightData.departure_time.split(":")[1]}:00`,
-            sun_event: flightData.sun_preference,
-            quality_score: 87.5,
-            flight_direction: "zachodni",
-          },
-        });
-      }, 1500);
+    console.log("Wysyłanie danych do API:", flightData);
+    const response = await fetch(`${API_BASE_URL}/calculate-seat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        departure_airport: flightData.departureAirport,
+        arrival_airport: flightData.arrivalAirport,
+        departure_date: flightData.departureDate,
+        departure_time: flightData.departureTime,
+        sun_preference: flightData.sunPreference,
+      }),
     });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("Błąd API:", errorText);
+      try {
+        const errorData = JSON.parse(errorText);
+        throw new Error(
+          errorData.detail || "Wystąpił błąd podczas pobierania rekomendacji"
+        );
+      } catch (e) {
+        throw new Error(
+          `Błąd API (${response.status}): ${errorText || "Nieznany błąd"}`
+        );
+      }
+    }
+
+    return await response.json();
   } catch (error) {
     console.error("Błąd podczas pobierania rekomendacji:", error);
     throw error;
@@ -61,58 +43,64 @@ export const fetchSeatRecommendation = async (flightData) => {
 
 export const searchAirports = async (query) => {
   try {
-    // W rzeczywistej aplikacji wykonywalibyśmy tutaj faktyczne zapytanie API
-    // return await fetch(`${API_BASE_URL}/airports/search?query=${encodeURIComponent(query)}`).then(res => res.json());
+    if (!query || query.length < 2) return [];
 
-    // Symulacja odpowiedzi API
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const airports = [
-          {
-            code: "WAW",
-            name: "Warsaw Chopin Airport",
-            city: "Warsaw",
-            country: "Poland",
-          },
-          {
-            code: "KRK",
-            name: "John Paul II International Airport",
-            city: "Krakow",
-            country: "Poland",
-          },
-          {
-            code: "CDG",
-            name: "Charles de Gaulle Airport",
-            city: "Paris",
-            country: "France",
-          },
-          {
-            code: "LHR",
-            name: "Heathrow Airport",
-            city: "London",
-            country: "United Kingdom",
-          },
-          {
-            code: "JFK",
-            name: "John F. Kennedy International Airport",
-            city: "New York",
-            country: "United States",
-          },
-        ];
+    console.log(`Wyszukiwanie lotnisk dla zapytania: "${query}"`);
 
-        // Filtrowanie wyników
-        const filtered = airports.filter(
-          (airport) =>
-            airport.code.toLowerCase().includes(query.toLowerCase()) ||
-            airport.name.toLowerCase().includes(query.toLowerCase()) ||
-            airport.city.toLowerCase().includes(query.toLowerCase())
+    // Dodajemy timestamp do URL, aby uniknąć problemów z cache
+    const timestamp = new Date().getTime();
+    const url = `${API_BASE_URL}/airports/search?query=${encodeURIComponent(
+      query
+    )}&_=${timestamp}`;
+
+    console.log("URL zapytania:", url);
+
+    const response = await fetch(url);
+
+    // Logujemy status odpowiedzi
+    console.log("Status odpowiedzi:", response.status);
+
+    // Jeśli odpowiedź nie jest ok, logujemy szczegóły i rzucamy wyjątek
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("Błąd API:", errorText);
+      try {
+        const errorData = JSON.parse(errorText);
+        throw new Error(
+          errorData.detail || "Wystąpił błąd podczas wyszukiwania lotnisk"
         );
+      } catch (e) {
+        throw new Error(
+          `Błąd API (${response.status}): ${errorText || "Nieznany błąd"}`
+        );
+      }
+    }
 
-        resolve(filtered);
-      }, 300);
-    });
+    // Logujemy pozytywną odpowiedź
+    const data = await response.json();
+    console.log("Otrzymane dane:", data);
+    return data;
   } catch (error) {
     console.error("Błąd podczas wyszukiwania lotnisk:", error);
     throw error;
+  }
+};
+
+// Dodajmy dodatkową funkcję do testowania połączenia z API
+export const testApiConnection = async () => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/health`);
+    const data = await response.json();
+    return {
+      success: true,
+      status: response.status,
+      data,
+    };
+  } catch (error) {
+    console.error("Błąd testowania połączenia z API:", error);
+    return {
+      success: false,
+      error: error.message,
+    };
   }
 };

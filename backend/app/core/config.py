@@ -8,8 +8,17 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "SunFlight API"
     API_V1_STR: str = "/api/v1"
     
-    # CORS
-    CORS_ORIGINS: List[str] = ["http://localhost:3000", "http://localhost:8000"]
+    # CORS - dodajemy adres frontendu
+    CORS_ORIGINS: List[str] = [
+        "http://localhost:3000",  # Frontend React
+        "http://localhost:3001",  # Frontend React
+
+        "http://localhost:8000",  # Backend podczas debugowania
+        "http://127.0.0.1:3000",  # Alternatywny adres frontendu
+        "http://127.0.0.1:3001",  # Alternatywny adres frontendu
+
+        "http://127.0.0.1:8000",  # Alternatywny adres backendu
+    ]
     
     # Konfiguracja bazy danych (opcjonalna)
     DATABASE_URL: str = "sqlite:///./sunflight.db"

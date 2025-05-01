@@ -30,6 +30,31 @@ class FlightRequest(BaseModel):
         if v not in ["sunrise", "sunset"]:
             raise ValueError('sun_preference musi być "sunrise" lub "sunset"')
         return v
+    
+    @validator('departure_time', pre=True)
+    def parse_departure_time(cls, v):
+        # Obsługa formatu HH:MM przychodzącego z frontendu
+        if isinstance(v, str) and ":" in v:
+            try:
+                hours, minutes = map(int, v.split(':'))
+                return time(hour=hours, minute=minutes)
+            except ValueError:
+                raise ValueError('Niepoprawny format czasu. Wymagany format: HH:MM')
+        return v
+
+class WeatherData(BaseModel):
+    clouds_percent: float = Field(..., description="Procent zachmurzenia")
+    precipitation_percent: float = Field(..., description="Prawdopodobieństwo opadów w procentach")
+    visibility_km: float = Field(..., description="Widoczność w kilometrach")
+    temperature_celsius: float = Field(..., description="Temperatura w stopniach Celsjusza")
+    description: str = Field(..., description="Tekstowy opis pogody")
+    viewing_conditions: str = Field(..., description="Opis warunków do obserwacji (np. doskonałe, dobre, słabe)")
+
+class SunEventTime(BaseModel):
+    event_type: str = Field(..., description="Typ wydarzenia: sunrise (wschód) lub sunset (zachód)")
+    event_time: datetime = Field(..., description="Dokładny czas wydarzenia")
+    is_visible_during_flight: bool = Field(..., description="Czy wydarzenie będzie widoczne podczas lotu")
+    event_location: Optional[Dict[str, float]] = Field(None, description="Współrzędne geograficzne wydarzenia")
 
 class SunPositionData(BaseModel):
     datetime: datetime
@@ -50,6 +75,9 @@ class SeatRecommendation(BaseModel):
     sun_event: str = Field(..., description="Wydarzenie (sunrise/sunset)")
     quality_score: float = Field(..., description="Ocena jakości widoku (0-100)")
     flight_direction: str = Field(..., description="Kierunek lotu podczas wydarzenia")
+    weather_data: Optional[WeatherData] = None
+    sun_event_times: Optional[List[SunEventTime]] = Field([], description="Czasy wschodu/zachodu słońca podczas lotu")
+    recommendation_notes: Optional[str] = Field(None, description="Dodatkowe uwagi do rekomendacji")
 
 class FlightResponse(BaseModel):
     departure_airport: AirportBase
@@ -61,3 +89,4 @@ class FlightResponse(BaseModel):
     aircraft_model: Optional[str] = None
     recommendation: SeatRecommendation
     route_preview: List[FlightRoutePoint] = Field([], description="Uproszczona trasa lotu")
+    sun_events_visible: bool = Field(True, description="Czy wschód/zachód jest widoczny podczas lotu")
