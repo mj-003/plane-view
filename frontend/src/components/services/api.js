@@ -1,12 +1,12 @@
 // services/api.js
 /**
- * Serwis obsługujący komunikację z API
+ * Service handling API communication
  */
 const API_BASE_URL = "http://localhost:8000/api/v1";
 
 export const fetchSeatRecommendation = async (flightData) => {
   try {
-    console.log("Wysyłanie danych do API:", flightData);
+    console.log("Sending data to API:", flightData);
     const response = await fetch(`${API_BASE_URL}/calculate-seat`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -21,22 +21,22 @@ export const fetchSeatRecommendation = async (flightData) => {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("Błąd API:", errorText);
+      console.error("API Error:", errorText);
       try {
         const errorData = JSON.parse(errorText);
         throw new Error(
-          errorData.detail || "Wystąpił błąd podczas pobierania rekomendacji"
+          errorData.detail || "An error occurred while fetching recommendation"
         );
       } catch (e) {
         throw new Error(
-          `Błąd API (${response.status}): ${errorText || "Nieznany błąd"}`
+          `API Error (${response.status}): ${errorText || "Unknown error"}`
         );
       }
     }
 
     return await response.json();
   } catch (error) {
-    console.error("Błąd podczas pobierania rekomendacji:", error);
+    console.error("Error fetching recommendation:", error);
     throw error;
   }
 };
@@ -45,48 +45,45 @@ export const searchAirports = async (query) => {
   try {
     if (!query || query.length < 2) return [];
 
-    console.log(`Wyszukiwanie lotnisk dla zapytania: "${query}"`);
+    console.log(`Searching airports for query: "${query}"`);
 
-    // Dodajemy timestamp do URL, aby uniknąć problemów z cache
+    // Add timestamp to URL to avoid caching issues
     const timestamp = new Date().getTime();
     const url = `${API_BASE_URL}/airports/search?query=${encodeURIComponent(
       query
     )}&_=${timestamp}`;
 
-    console.log("URL zapytania:", url);
+    console.log("Query URL:", url);
 
     const response = await fetch(url);
 
-    // Logujemy status odpowiedzi
-    console.log("Status odpowiedzi:", response.status);
+    console.log("Response status:", response.status);
 
-    // Jeśli odpowiedź nie jest ok, logujemy szczegóły i rzucamy wyjątek
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("Błąd API:", errorText);
+      console.error("API Error:", errorText);
       try {
         const errorData = JSON.parse(errorText);
         throw new Error(
-          errorData.detail || "Wystąpił błąd podczas wyszukiwania lotnisk"
+          errorData.detail || "An error occurred while searching airports"
         );
       } catch (e) {
         throw new Error(
-          `Błąd API (${response.status}): ${errorText || "Nieznany błąd"}`
+          `API Error (${response.status}): ${errorText || "Unknown error"}`
         );
       }
     }
 
-    // Logujemy pozytywną odpowiedź
     const data = await response.json();
-    console.log("Otrzymane dane:", data);
+    console.log("Received data:", data);
     return data;
   } catch (error) {
-    console.error("Błąd podczas wyszukiwania lotnisk:", error);
+    console.error("Error searching airports:", error);
     throw error;
   }
 };
 
-// Dodajmy dodatkową funkcję do testowania połączenia z API
+// Function to test API connection
 export const testApiConnection = async () => {
   try {
     const response = await fetch(`${API_BASE_URL}/health`);
@@ -97,7 +94,7 @@ export const testApiConnection = async () => {
       data,
     };
   } catch (error) {
-    console.error("Błąd testowania połączenia z API:", error);
+    console.error("Error testing API connection:", error);
     return {
       success: false,
       error: error.message,

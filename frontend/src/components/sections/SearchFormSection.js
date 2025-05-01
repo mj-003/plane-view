@@ -1,390 +1,377 @@
+// components/sections/SearchFormSection.jsx
 import React, { useState, useEffect } from "react";
 import {
-  Sunrise,
-  Sunset,
   Plane,
-  Search,
-  MapPin,
   Calendar,
   Clock,
+  ArrowRight,
+  Sunrise,
+  Sunset,
+  Search,
 } from "lucide-react";
 import { useAirportSearch } from "../hooks/useAirportSearch";
-import { testApiConnection } from "../services/api";
 
-const SearchFormSection = ({ onSubmit, searching }) => {
-  // Stany formularza
-  const [departureAirport, setDepartureAirport] = useState("");
-  const [departureAirportCode, setDepartureAirportCode] = useState("");
-  const [arrivalAirport, setArrivalAirport] = useState("");
-  const [arrivalAirportCode, setArrivalAirportCode] = useState("");
-  const [departureDate, setDepartureDate] = useState("");
-  const [departureTime, setDepartureTime] = useState("");
-  const [sunPreference, setSunPreference] = useState("sunset");
+const SearchFormSection = ({ onSubmit, searching, isChangingStep }) => {
+  // State management
+  const [flightDetails, setFlightDetails] = useState({
+    departureAirport: "",
+    arrivalAirport: "",
+    departureDate: "",
+    departureTime: "",
+    sunPreference: "sunset",
+  });
+  const [departureAirportText, setDepartureAirportText] = useState("");
+  const [arrivalAirportText, setArrivalAirportText] = useState("");
   const [formErrors, setFormErrors] = useState({});
-  const [apiStatus, setApiStatus] = useState({ checked: false, online: false });
 
-  // Hooki wyszukiwania lotnisk dla wylotu
+  // Hooks for airport search
   const departureHook = useAirportSearch();
-
-  // Hooki wyszukiwania lotnisk dla przylotu
   const arrivalHook = useAirportSearch();
 
   // Initialize date and time
   useEffect(() => {
-    const now = new Date();
-    const tomorrow = new Date(now);
-    tomorrow.setDate(now.getDate() + 1);
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
 
     const formattedDate = tomorrow.toISOString().split("T")[0];
-    setDepartureDate(formattedDate);
-
-    const hours = String(10).padStart(2, "0");
-    const minutes = String(0).padStart(2, "0");
-    setDepartureTime(`${hours}:${minutes}`);
-
-    // Sprawdź status API
-    checkApiConnection();
+    setFlightDetails((prev) => ({
+      ...prev,
+      departureDate: formattedDate,
+      departureTime: "10:00",
+    }));
   }, []);
 
-  // Sprawdź połączenie z API
-  const checkApiConnection = async () => {
-    try {
-      const result = await testApiConnection();
-      console.log("Test połączenia API:", result);
-      setApiStatus({ checked: true, online: result.success });
-    } catch (error) {
-      console.error("Błąd testowania API:", error);
-      setApiStatus({ checked: true, online: false });
+  // Handle form input changes
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFlightDetails((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+
+    // Clear error for this field
+    if (formErrors[name]) {
+      setFormErrors((prev) => ({
+        ...prev,
+        [name]: "",
+      }));
     }
   };
 
-  // Wybór lotniska wylotu
+  // Handle airport search text changes
+  const handleDepartureSearch = (text) => {
+    setDepartureAirportText(text);
+    departureHook.handleSearch(text);
+  };
+
+  const handleArrivalSearch = (text) => {
+    setArrivalAirportText(text);
+    arrivalHook.handleSearch(text);
+  };
+
+  // Handle airport selection
   const selectDepartureAirport = (airport) => {
-    setDepartureAirport(`${airport.code} - ${airport.name}`);
-    setDepartureAirportCode(airport.code);
+    setDepartureAirportText(`${airport.code} - ${airport.name}`);
+    setFlightDetails((prev) => ({
+      ...prev,
+      departureAirport: airport.code,
+    }));
     departureHook.hideResults();
-    setFormErrors({ ...formErrors, departureAirport: "" });
+
+    if (formErrors.departureAirport) {
+      setFormErrors((prev) => ({
+        ...prev,
+        departureAirport: "",
+      }));
+    }
   };
 
-  // Wybór lotniska przylotu
   const selectArrivalAirport = (airport) => {
-    setArrivalAirport(`${airport.code} - ${airport.name}`);
-    setArrivalAirportCode(airport.code);
+    setArrivalAirportText(`${airport.code} - ${airport.name}`);
+    setFlightDetails((prev) => ({
+      ...prev,
+      arrivalAirport: airport.code,
+    }));
     arrivalHook.hideResults();
-    setFormErrors({ ...formErrors, arrivalAirport: "" });
+
+    if (formErrors.arrivalAirport) {
+      setFormErrors((prev) => ({
+        ...prev,
+        arrivalAirport: "",
+      }));
+    }
   };
 
-  // Walidacja formularza
+  // Handle sun preference change
+  const handleSunPreferenceChange = (preference) => {
+    setFlightDetails((prev) => ({
+      ...prev,
+      sunPreference: preference,
+    }));
+  };
+
+  // Form validation
   const validateForm = () => {
     const errors = {};
 
-    if (!departureAirportCode)
-      errors.departureAirport = "Wybierz lotnisko wylotu";
-    if (!arrivalAirportCode)
-      errors.arrivalAirport = "Wybierz lotnisko przylotu";
-    if (!departureDate) errors.departureDate = "Wybierz datę wylotu";
-    if (!departureTime) errors.departureTime = "Wybierz czas wylotu";
+    if (!flightDetails.departureAirport) {
+      errors.departureAirport = "Please select departure airport";
+    }
+    if (!flightDetails.arrivalAirport) {
+      errors.arrivalAirport = "Please select arrival airport";
+    }
+    if (!flightDetails.departureDate) {
+      errors.departureDate = "Please select departure date";
+    }
+    if (!flightDetails.departureTime) {
+      errors.departureTime = "Please select departure time";
+    }
 
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  // Handle form submission
+  const handleSubmit = () => {
     if (!validateForm()) return;
 
-    if (onSubmit) {
-      onSubmit({
-        departureAirport: departureAirportCode,
-        arrivalAirport: arrivalAirportCode,
-        departureDate,
-        departureTime,
-        sunPreference,
-      });
-    }
+    onSubmit(flightDetails);
   };
 
   return (
-    <div className="w-full max-w-3xl mx-auto px-6 py-16">
-      <div className="bg-white rounded-xl shadow-md overflow-hidden">
-        <div className="p-8">
-          <h2 className="text-xl font-medium text-gray-800 mb-10 text-center">
-            Wyszukaj lot
-          </h2>
+    <section className="py-16 px-4 flex items-center justify-center min-h-screen">
+      <div className="w-full max-w-xl">
+        <h1 className="text-xl font-light mb-8 text-center">
+          Find your perfect seat
+          <br />
+          <span className="text-base text-gray-500">
+            Search for your flight
+          </span>
+        </h1>
 
-          {apiStatus.checked && !apiStatus.online && (
-            <div className="mb-6 p-4 bg-yellow-50 text-yellow-800 rounded-lg border border-yellow-200">
-              <p className="flex items-center">
-                <svg
-                  className="w-5 h-5 mr-2"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-                    clipRule="evenodd"
-                  ></path>
-                </svg>
-                Pracujemy w trybie offline. Używamy lokalnej bazy danych
-                lotnisk.
-              </p>
+        <div className="rounded-xl overflow-hidden shadow bg-white border border-gray-50 transition-shadow hover:shadow-md">
+          <div className="py-8 px-8 space-y-7">
+            <div className="flex items-center mb-4">
+              <div className="w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center mr-3 transform transition-transform hover:scale-105 duration-300">
+                <Plane className="text-amber-500 w-5 h-5" />
+              </div>
+              <h2 className="text-lg font-light">Flight Details</h2>
             </div>
-          )}
 
-          <div className="space-y-6">
-            {/* Lotniska */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {/* Departure Airport */}
+            <div className="transition-all duration-300 hover:translate-x-1">
+              <label className="text-xs text-gray-500 mb-2 block">
+                Departure
+              </label>
               <div className="relative">
-                <label className="block text-sm font-normal text-gray-600 mb-1.5">
-                  <div className="flex items-center">
-                    <MapPin size={16} className="mr-1 text-indigo-600" />
-                    Lotnisko wylotu
-                  </div>
-                </label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={departureAirport}
-                    onChange={(e) => {
-                      setDepartureAirport(e.target.value);
-                      departureHook.handleSearch(e.target.value);
-                      setDepartureAirportCode(""); // reset code when typing
-                    }}
-                    placeholder="Kod lub miasto, np. WAW, Warszawa"
-                    className={`w-full p-2.5 bg-gray-50 border ${
-                      formErrors.departureAirport
-                        ? "border-red-300 focus:ring-red-500 focus:border-red-500"
-                        : "border-gray-200 focus:ring-indigo-500 focus:border-indigo-500"
-                    } rounded-lg focus:outline-none focus:ring-1 transition-all text-gray-700 placeholder-gray-400`}
-                  />
-                  {departureHook.loading ? (
-                    <div className="absolute right-3 top-3.5">
-                      <div className="animate-spin h-4 w-4 border-2 border-indigo-500 rounded-full border-t-transparent"></div>
-                    </div>
-                  ) : (
-                    <Search
-                      size={18}
-                      className="absolute right-3 top-3.5 text-gray-400"
-                    />
-                  )}
-                </div>
+                <input
+                  type="text"
+                  value={departureAirportText}
+                  onChange={(e) => handleDepartureSearch(e.target.value)}
+                  placeholder="e.g. London (LHR)"
+                  className={`w-full px-4 py-3 border ${
+                    formErrors.departureAirport
+                      ? "border-red-300"
+                      : "border-gray-100"
+                  } rounded-lg focus:border-amber-500 focus:outline-none transition-colors text-lg`}
+                />
+                <Search
+                  size={18}
+                  className="absolute right-3 top-3.5 text-gray-400"
+                />
                 {formErrors.departureAirport && (
-                  <p className="mt-1 text-sm text-red-600">
+                  <p className="mt-1 text-sm text-red-500">
                     {formErrors.departureAirport}
                   </p>
                 )}
-                {departureHook.error &&
-                  !departureHook.error.includes("tryb offline") && (
-                    <p className="mt-1 text-sm text-red-600">
-                      {departureHook.error}
-                    </p>
-                  )}
-
-                {departureHook.showResults &&
-                  departureHook.searchResults.length > 0 && (
-                    <div className="absolute z-50 mt-1 w-full bg-white rounded-md shadow-lg max-h-60 overflow-auto">
-                      <ul className="py-1">
-                        {departureHook.searchResults.map((airport) => (
-                          <li
-                            key={airport.code}
-                            className="px-4 py-2 hover:bg-indigo-50 cursor-pointer"
-                            onClick={() => selectDepartureAirport(airport)}
-                          >
-                            <div className="font-medium">
-                              {airport.code} - {airport.name}
-                            </div>
-                            <div className="text-sm text-gray-500">
-                              {airport.city}, {airport.country}
-                            </div>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
               </div>
 
-              <div className="relative">
-                <label className="block text-sm font-normal text-gray-600 mb-1.5">
-                  <div className="flex items-center">
-                    <MapPin size={16} className="mr-1 text-indigo-600" />
-                    Lotnisko przylotu
+              {/* Search Results for Departure */}
+              {departureHook.showResults &&
+                departureHook.searchResults.length > 0 && (
+                  <div className="absolute z-50 mt-1 w-full bg-white rounded-md shadow-lg max-h-60 overflow-auto">
+                    <ul className="py-1">
+                      {departureHook.searchResults.map((airport) => (
+                        <li
+                          key={airport.code}
+                          className="px-4 py-2 hover:bg-amber-50 cursor-pointer"
+                          onClick={() => selectDepartureAirport(airport)}
+                        >
+                          <div className="font-medium">
+                            {airport.code} - {airport.name}
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            {airport.city}, {airport.country}
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
-                </label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={arrivalAirport}
-                    onChange={(e) => {
-                      setArrivalAirport(e.target.value);
-                      arrivalHook.handleSearch(e.target.value);
-                      setArrivalAirportCode(""); // reset code when typing
-                    }}
-                    placeholder="Kod lub miasto, np. CDG, Paryż"
-                    className={`w-full p-2.5 bg-gray-50 border ${
-                      formErrors.arrivalAirport
-                        ? "border-red-300 focus:ring-red-500 focus:border-red-500"
-                        : "border-gray-200 focus:ring-indigo-500 focus:border-indigo-500"
-                    } rounded-lg focus:outline-none focus:ring-1 transition-all text-gray-700 placeholder-gray-400`}
-                  />
-                  {arrivalHook.loading ? (
-                    <div className="absolute right-3 top-3.5">
-                      <div className="animate-spin h-4 w-4 border-2 border-indigo-500 rounded-full border-t-transparent"></div>
-                    </div>
-                  ) : (
-                    <Search
-                      size={18}
-                      className="absolute right-3 top-3.5 text-gray-400"
-                    />
-                  )}
-                </div>
+                )}
+            </div>
+
+            {/* Arrival Airport */}
+            <div className="transition-all duration-300 hover:translate-x-1">
+              <label className="text-xs text-gray-500 mb-2 block">
+                Destination
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={arrivalAirportText}
+                  onChange={(e) => handleArrivalSearch(e.target.value)}
+                  placeholder="e.g. Tokyo (HND)"
+                  className={`w-full px-4 py-3 border ${
+                    formErrors.arrivalAirport
+                      ? "border-red-300"
+                      : "border-gray-100"
+                  } rounded-lg focus:border-amber-500 focus:outline-none transition-colors text-lg`}
+                />
+                <Search
+                  size={18}
+                  className="absolute right-3 top-3.5 text-gray-400"
+                />
                 {formErrors.arrivalAirport && (
-                  <p className="mt-1 text-sm text-red-600">
+                  <p className="mt-1 text-sm text-red-500">
                     {formErrors.arrivalAirport}
                   </p>
                 )}
-                {arrivalHook.error &&
-                  !arrivalHook.error.includes("tryb offline") && (
-                    <p className="mt-1 text-sm text-red-600">
-                      {arrivalHook.error}
-                    </p>
-                  )}
-
-                {arrivalHook.showResults &&
-                  arrivalHook.searchResults.length > 0 && (
-                    <div className="absolute z-50 mt-1 w-full bg-white rounded-md shadow-lg max-h-60 overflow-auto">
-                      <ul className="py-1">
-                        {arrivalHook.searchResults.map((airport) => (
-                          <li
-                            key={airport.code}
-                            className="px-4 py-2 hover:bg-indigo-50 cursor-pointer"
-                            onClick={() => selectArrivalAirport(airport)}
-                          >
-                            <div className="font-medium">
-                              {airport.code} - {airport.name}
-                            </div>
-                            <div className="text-sm text-gray-500">
-                              {airport.city}, {airport.country}
-                            </div>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
               </div>
+
+              {/* Search Results for Arrival */}
+              {arrivalHook.showResults &&
+                arrivalHook.searchResults.length > 0 && (
+                  <div className="absolute z-50 mt-1 w-full bg-white rounded-md shadow-lg max-h-60 overflow-auto">
+                    <ul className="py-1">
+                      {arrivalHook.searchResults.map((airport) => (
+                        <li
+                          key={airport.code}
+                          className="px-4 py-2 hover:bg-amber-50 cursor-pointer"
+                          onClick={() => selectArrivalAirport(airport)}
+                        >
+                          <div className="font-medium">
+                            {airport.code} - {airport.name}
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            {airport.city}, {airport.country}
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
             </div>
 
-            {/* Data i czas */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <div>
-                <label className="block text-sm font-normal text-gray-600 mb-1.5">
-                  <div className="flex items-center">
-                    <Calendar size={16} className="mr-1 text-indigo-600" />
-                    Data wylotu
-                  </div>
+            {/* Date and Time */}
+            <div className="grid grid-cols-2 gap-6">
+              <div className="transition-all duration-300 hover:translate-x-1">
+                <label className="text-xs text-gray-500 mb-2 flex items-center">
+                  <Calendar className="w-3 h-3 mr-1" />
+                  Date
                 </label>
                 <input
                   type="date"
-                  value={departureDate}
-                  onChange={(e) => {
-                    setDepartureDate(e.target.value);
-                    setFormErrors({ ...formErrors, departureDate: "" });
-                  }}
-                  className={`w-full p-2.5 bg-gray-50 border ${
+                  name="departureDate"
+                  value={flightDetails.departureDate}
+                  onChange={handleInputChange}
+                  className={`w-full px-4 py-3 border ${
                     formErrors.departureDate
-                      ? "border-red-300 focus:ring-red-500 focus:border-red-500"
-                      : "border-gray-200 focus:ring-indigo-500 focus:border-indigo-500"
-                  } rounded-lg focus:outline-none focus:ring-1 transition-all text-gray-700`}
+                      ? "border-red-300"
+                      : "border-gray-100"
+                  } rounded-lg focus:border-amber-500 focus:outline-none transition-colors`}
                 />
                 {formErrors.departureDate && (
-                  <p className="mt-1 text-sm text-red-600">
+                  <p className="mt-1 text-sm text-red-500">
                     {formErrors.departureDate}
                   </p>
                 )}
               </div>
 
-              <div>
-                <label className="block text-sm font-normal text-gray-600 mb-1.5">
-                  <div className="flex items-center">
-                    <Clock size={16} className="mr-1 text-indigo-600" />
-                    Czas wylotu
-                  </div>
+              <div className="transition-all duration-300 hover:translate-x-1">
+                <label className="text-xs text-gray-500 mb-2 flex items-center">
+                  <Clock className="w-3 h-3 mr-1" />
+                  Time
                 </label>
                 <input
                   type="time"
-                  value={departureTime}
-                  onChange={(e) => {
-                    setDepartureTime(e.target.value);
-                    setFormErrors({ ...formErrors, departureTime: "" });
-                  }}
-                  className={`w-full p-2.5 bg-gray-50 border ${
+                  name="departureTime"
+                  value={flightDetails.departureTime}
+                  onChange={handleInputChange}
+                  className={`w-full px-4 py-3 border ${
                     formErrors.departureTime
-                      ? "border-red-300 focus:ring-red-500 focus:border-red-500"
-                      : "border-gray-200 focus:ring-indigo-500 focus:border-indigo-500"
-                  } rounded-lg focus:outline-none focus:ring-1 transition-all text-gray-700`}
+                      ? "border-red-300"
+                      : "border-gray-100"
+                  } rounded-lg focus:border-amber-500 focus:outline-none transition-colors`}
                 />
                 {formErrors.departureTime && (
-                  <p className="mt-1 text-sm text-red-600">
+                  <p className="mt-1 text-sm text-red-500">
                     {formErrors.departureTime}
                   </p>
                 )}
               </div>
             </div>
 
-            {/* Preferencja słońca */}
+            {/* Sun Preference */}
             <div>
-              <label className="block text-sm font-normal text-gray-600 mb-3">
-                Preferencja
+              <label className="text-xs text-gray-500 mb-2 block">
+                Preference
               </label>
               <div className="grid grid-cols-2 gap-4">
                 <button
                   type="button"
-                  className={`flex items-center justify-center py-2.5 px-4 rounded-lg transition-all ${
-                    sunPreference === "sunrise"
+                  className={`flex items-center justify-center p-4 rounded-lg border ${
+                    flightDetails.sunPreference === "sunrise"
                       ? "bg-amber-500 text-white"
-                      : "bg-gray-50 border border-gray-200 text-gray-600 hover:bg-gray-100"
-                  }`}
-                  onClick={() => setSunPreference("sunrise")}
+                      : "bg-white border-gray-100 text-gray-700 hover:bg-gray-50"
+                  } transition-colors`}
+                  onClick={() => handleSunPreferenceChange("sunrise")}
                 >
                   <Sunrise size={18} className="mr-2" />
-                  <span>Wschód słońca</span>
+                  Sunrise
                 </button>
 
                 <button
                   type="button"
-                  className={`flex items-center justify-center py-2.5 px-4 rounded-lg transition-all ${
-                    sunPreference === "sunset"
+                  className={`flex items-center justify-center p-4 rounded-lg border ${
+                    flightDetails.sunPreference === "sunset"
                       ? "bg-orange-500 text-white"
-                      : "bg-gray-50 border border-gray-200 text-gray-600 hover:bg-gray-100"
-                  }`}
-                  onClick={() => setSunPreference("sunset")}
+                      : "bg-white border-gray-100 text-gray-700 hover:bg-gray-50"
+                  } transition-colors`}
+                  onClick={() => handleSunPreferenceChange("sunset")}
                 >
                   <Sunset size={18} className="mr-2" />
-                  <span>Zachód słońca</span>
+                  Sunset
                 </button>
               </div>
             </div>
+          </div>
 
+          <div className="bg-gray-50 p-6">
+            <p className="text-center text-sm text-gray-500 mb-5">
+              We'll automatically find the best seats for your flight
+            </p>
             <button
               onClick={handleSubmit}
-              disabled={
-                searching || !departureAirportCode || !arrivalAirportCode
-              }
-              className="w-full py-3 mt-2 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:hover:bg-indigo-600 transition-colors"
+              disabled={searching}
+              className="w-full py-3.5 bg-amber-500 text-white rounded-full font-light flex items-center justify-center disabled:bg-gray-300 transition-all duration-300 hover:bg-amber-600 hover:shadow-md"
             >
               {searching ? (
-                <div className="flex items-center justify-center">
+                <div className="flex items-center">
                   <div className="animate-spin h-5 w-5 border-2 border-white rounded-full border-t-transparent mr-2"></div>
-                  Wyszukiwanie...
+                  Searching...
                 </div>
               ) : (
-                "Wyszukaj"
+                <>
+                  <span>Find Perfect Seat</span>
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </>
               )}
             </button>
           </div>
         </div>
       </div>
-    </div>
+    </section>
   );
 };
 

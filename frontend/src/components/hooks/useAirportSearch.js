@@ -1,5 +1,5 @@
 // hooks/useAirportSearch.js
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { searchAirports } from "../services/api";
 
 export const useAirportSearch = () => {
@@ -9,10 +9,10 @@ export const useAirportSearch = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Użyjmy ref dla debounce timera, aby uniknąć problemów z useCallback
+  // Ref for debounce timer
   const timerRef = useRef(null);
 
-  // Funkcja do bezpośredniego wyszukiwania (bez debounce)
+  // Search airports function
   const searchAirportsDirectly = async (searchQuery) => {
     if (searchQuery.length < 2) {
       setSearchResults([]);
@@ -24,22 +24,20 @@ export const useAirportSearch = () => {
       setLoading(true);
       setError(null);
 
-      // Użyjmy hard-coded danych jako fallback, jeśli API nie działa
+      // Try to fetch from API, fallback to mock data if needed
       try {
         const results = await searchAirports(searchQuery);
-        console.log("Wyniki z API:", results);
 
-        // Sprawdźmy, czy wyniki są tablicą
         if (Array.isArray(results)) {
           setSearchResults(results);
           setShowResults(results.length > 0);
         } else {
-          throw new Error("Nieprawidłowy format danych z API");
+          throw new Error("Invalid data format from API");
         }
       } catch (apiError) {
-        console.error("Błąd API, używam danych lokalnych:", apiError);
+        console.error("API error, using fallback data:", apiError);
 
-        // Fallback do lokalnej bazy lotnisk
+        // Fallback to local airport database
         const airports = [
           {
             code: "WAW",
@@ -103,7 +101,7 @@ export const useAirportSearch = () => {
           },
         ];
 
-        // Filtrowanie lokalnych wyników
+        // Filter local results
         const filtered = airports.filter(
           (airport) =>
             airport.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -113,24 +111,22 @@ export const useAirportSearch = () => {
 
         setSearchResults(filtered);
         setShowResults(filtered.length > 0);
-
-        // Ustawiamy łagodniejszy komunikat błędu
-        setError("Używamy lokalnej bazy danych lotnisk (tryb offline)");
+        setError("Using offline airport database");
       }
     } catch (err) {
-      console.error("Błąd wyszukiwania lotnisk:", err);
-      setError("Nie udało się wyszukać lotnisk. Spróbuj ponownie.");
+      console.error("Error searching airports:", err);
+      setError("Failed to search airports. Please try again.");
       setSearchResults([]);
     } finally {
       setLoading(false);
     }
   };
 
-  // Debouncowane wyszukiwanie
+  // Debounced search
   const handleSearch = (newQuery) => {
     setQuery(newQuery);
 
-    // Wyczyść poprzedni timer
+    // Clear previous timer
     if (timerRef.current) {
       clearTimeout(timerRef.current);
     }
@@ -140,13 +136,13 @@ export const useAirportSearch = () => {
       return;
     }
 
-    // Ustaw nowy timer
+    // Set new timer
     timerRef.current = setTimeout(() => {
       searchAirportsDirectly(newQuery);
     }, 300);
   };
 
-  // Czyszczenie timera przy odmontowaniu komponentu
+  // Clean up timer on unmount
   useEffect(() => {
     return () => {
       if (timerRef.current) {
@@ -155,6 +151,7 @@ export const useAirportSearch = () => {
     };
   }, []);
 
+  // Hide search results
   const hideResults = () => {
     setShowResults(false);
   };
@@ -169,3 +166,5 @@ export const useAirportSearch = () => {
     hideResults,
   };
 };
+
+export default useAirportSearch;
