@@ -1,6 +1,5 @@
-// components/sections/SearchFormSection.js
 import React, { useState, useEffect } from "react";
-import { Sunrise, Sunset } from "lucide-react";
+import { Sunrise, Sunset, Plane } from "lucide-react";
 
 const SearchFormSection = ({ onSubmit, searching }) => {
   const [departureAirport, setDepartureAirport] = useState("");
@@ -9,7 +8,7 @@ const SearchFormSection = ({ onSubmit, searching }) => {
   const [departureTime, setDepartureTime] = useState("");
   const [sunPreference, setSunPreference] = useState("sunset");
 
-  // Inicjalizacja daty i czasu
+  // Initialize date and time
   useEffect(() => {
     const now = new Date();
     const tomorrow = new Date(now);
@@ -25,9 +24,7 @@ const SearchFormSection = ({ onSubmit, searching }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-
     if (!departureAirport || !arrivalAirport) return;
-
     if (onSubmit) {
       onSubmit({
         departureAirport,
@@ -40,109 +37,111 @@ const SearchFormSection = ({ onSubmit, searching }) => {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm p-8 max-w-xl w-full mx-auto">
-      <h2 className="text-xl font-medium text-gray-900 mb-6">Wyszukaj lot</h2>
+    <div className="w-full max-w-3xl mx-auto px-6 py-16">
+      <div className="bg-white rounded-xl shadow-md overflow-hidden">
+        <div className="p-8">
+          <h2 className="text-xl font-medium text-gray-800 mb-10 text-center">
+            Search Flight
+          </h2>
 
-      <form onSubmit={handleSubmit} className="space-y-5">
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Lotnisko wylotu
-            </label>
-            <input
-              type="text"
-              value={departureAirport}
-              onChange={(e) => setDepartureAirport(e.target.value)}
-              placeholder="Kod IATA, np. WAW"
-              className="w-full p-2 border border-gray-300 rounded focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
-              required
-            />
-          </div>
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div>
+                <label className="block text-sm font-normal text-gray-600 mb-1.5">
+                  Departure Airport
+                </label>
+                <input
+                  type="text"
+                  value={departureAirport}
+                  onChange={(e) => setDepartureAirport(e.target.value)}
+                  placeholder="IATA Code, e.g. LHR"
+                  className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-all text-gray-700 placeholder-gray-400"
+                />
+              </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Lotnisko przylotu
-            </label>
-            <input
-              type="text"
-              value={arrivalAirport}
-              onChange={(e) => setArrivalAirport(e.target.value)}
-              placeholder="Kod IATA, np. LHR"
-              className="w-full p-2 border border-gray-300 rounded focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
-              required
-            />
-          </div>
-        </div>
+              <div>
+                <label className="block text-sm font-normal text-gray-600 mb-1.5">
+                  Arrival Airport
+                </label>
+                <input
+                  type="text"
+                  value={arrivalAirport}
+                  onChange={(e) => setArrivalAirport(e.target.value)}
+                  placeholder="IATA Code, e.g. JFK"
+                  className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-all text-gray-700 placeholder-gray-400"
+                />
+              </div>
+            </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Data wylotu
-            </label>
-            <input
-              type="date"
-              value={departureDate}
-              onChange={(e) => setDepartureDate(e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
-              required
-            />
-          </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div>
+                <label className="block text-sm font-normal text-gray-600 mb-1.5">
+                  Departure Date
+                </label>
+                <input
+                  type="date"
+                  value={departureDate}
+                  onChange={(e) => setDepartureDate(e.target.value)}
+                  className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-all text-gray-700"
+                />
+              </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Czas wylotu
-            </label>
-            <input
-              type="time"
-              value={departureTime}
-              onChange={(e) => setDepartureTime(e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
-              required
-            />
-          </div>
-        </div>
+              <div>
+                <label className="block text-sm font-normal text-gray-600 mb-1.5">
+                  Departure Time
+                </label>
+                <input
+                  type="time"
+                  value={departureTime}
+                  onChange={(e) => setDepartureTime(e.target.value)}
+                  className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-all text-gray-700"
+                />
+              </div>
+            </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Preferencja
-          </label>
-          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-normal text-gray-600 mb-3">
+                Preference
+              </label>
+              <div className="grid grid-cols-2 gap-4">
+                <button
+                  type="button"
+                  className={`flex items-center justify-center py-2.5 px-4 rounded-lg transition-all ${
+                    sunPreference === "sunrise"
+                      ? "bg-amber-500 text-white"
+                      : "bg-gray-50 border border-gray-200 text-gray-600 hover:bg-gray-100"
+                  }`}
+                  onClick={() => setSunPreference("sunrise")}
+                >
+                  <Sunrise size={18} className="mr-2" />
+                  <span>Sunrise</span>
+                </button>
+
+                <button
+                  type="button"
+                  className={`flex items-center justify-center py-2.5 px-4 rounded-lg transition-all ${
+                    sunPreference === "sunset"
+                      ? "bg-orange-500 text-white"
+                      : "bg-gray-50 border border-gray-200 text-gray-600 hover:bg-gray-100"
+                  }`}
+                  onClick={() => setSunPreference("sunset")}
+                >
+                  <Sunset size={18} className="mr-2" />
+                  <span>Sunset</span>
+                </button>
+              </div>
+            </div>
+
             <button
-              type="button"
-              className={`flex items-center justify-center py-2 px-4 border rounded ${
-                sunPreference === "sunrise"
-                  ? "bg-amber-50 border-amber-200 text-amber-700"
-                  : "bg-white border-gray-300 text-gray-700"
-              }`}
-              onClick={() => setSunPreference("sunrise")}
+              onClick={handleSubmit}
+              disabled={searching || !departureAirport || !arrivalAirport}
+              className="w-full py-3 mt-2 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:hover:bg-indigo-600 transition-colors"
             >
-              <Sunrise size={18} className="mr-2" />
-              Wschód słońca
-            </button>
-
-            <button
-              type="button"
-              className={`flex items-center justify-center py-2 px-4 border rounded ${
-                sunPreference === "sunset"
-                  ? "bg-orange-50 border-orange-200 text-orange-700"
-                  : "bg-white border-gray-300 text-gray-700"
-              }`}
-              onClick={() => setSunPreference("sunset")}
-            >
-              <Sunset size={18} className="mr-2" />
-              Zachód słońca
+              {searching ? "Searching..." : "Search"}
             </button>
           </div>
         </div>
-
-        <button
-          type="submit"
-          disabled={searching || !departureAirport || !arrivalAirport}
-          className="w-full py-2 bg-indigo-500 text-white rounded hover:bg-indigo-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {searching ? "Wyszukiwanie..." : "Wyszukaj"}
-        </button>
-      </form>
+      </div>
     </div>
   );
 };

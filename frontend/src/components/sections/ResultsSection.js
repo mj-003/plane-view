@@ -1,123 +1,200 @@
-// components/sections/ResultsSection.js
 import React from "react";
-import { Plane, Sun, Sunrise, Sunset, ArrowLeft } from "lucide-react";
+import {
+  Plane,
+  Sun,
+  Sunrise,
+  Sunset,
+  ArrowLeft,
+  AlertCircle,
+} from "lucide-react";
 
 const ResultsSection = ({ flightData, onSearchAgain }) => {
   if (!flightData) {
     return (
-      <div className="bg-white rounded-lg shadow-sm p-8 text-center max-w-xl w-full mx-auto">
-        <p className="text-gray-500">
-          Wypełnij formularz, aby zobaczyć rekomendację miejsca
-        </p>
+      <div className="w-full max-w-3xl mx-auto px-6 py-16">
+        <div className="bg-white rounded-xl shadow-md p-8 text-center">
+          <div className="py-8">
+            <div className="w-16 h-16 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-5">
+              <Sun className="text-gray-300" size={32} />
+            </div>
+            <p className="text-gray-500">
+              Complete the search form to find your ideal seat
+            </p>
+          </div>
+        </div>
       </div>
     );
   }
 
-  // Formatowanie czasu
+  // Format time
   const formatTime = (dateString) => {
     const date = new Date(dateString);
-    return date.toLocaleTimeString("pl-PL", {
+    return date.toLocaleTimeString("en-US", {
       hour: "2-digit",
       minute: "2-digit",
+      hour12: true,
     });
   };
 
-  return (
-    <div className="bg-white rounded-lg shadow-sm p-8 max-w-xl w-full mx-auto">
-      <div className="mb-8">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-medium text-gray-900">Rekomendacja</h2>
-          <span className="text-sm text-gray-500">
-            {flightData.departure_airport.code} →{" "}
-            {flightData.arrival_airport.code}
-          </span>
-        </div>
+  // Quality indicator class based on score
+  const getQualityClass = (score) => {
+    if (score >= 85) return "bg-green-500";
+    if (score >= 70) return "bg-amber-500";
+    return "bg-orange-500";
+  };
 
-        {/* Informacja o locie */}
-        <div className="flex mb-8">
-          <div className="w-10 h-10 flex-shrink-0 bg-indigo-100 rounded-full flex items-center justify-center mr-4">
-            <Plane size={20} className="text-indigo-600" />
-          </div>
-          <div>
-            <div className="text-sm text-gray-500">Czas lotu</div>
-            <div className="text-gray-900">
-              {formatTime(flightData.departure_time)} -{" "}
-              {formatTime(flightData.arrival_time)}
-              <span className="text-sm text-gray-500 ml-2">
-                ({flightData.flight_duration.toFixed(1)} godz.)
+  // Quality label based on score
+  const getQualityLabel = (score) => {
+    if (score >= 85) return "Excellent";
+    if (score >= 70) return "Good";
+    return "Moderate";
+  };
+
+  return (
+    <div className="w-full max-w-3xl mx-auto px-6 py-16">
+      <div className="bg-white rounded-xl shadow-md overflow-hidden">
+        {/* Header section */}
+        <div className="bg-indigo-600 px-6 py-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-medium text-white">Flight Details</h2>
+            <div className="flex items-center bg-white bg-opacity-20 px-3 py-1 rounded-full">
+              <span className="text-white text-sm">
+                {flightData.departure_airport.code}
+              </span>
+              <Plane
+                size={12}
+                className="mx-2 text-white transform rotate-90"
+              />
+              <span className="text-white text-sm">
+                {flightData.arrival_airport.code}
               </span>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Rekomendacja miejsca */}
-      <div className="bg-gray-50 rounded-lg p-6 mb-8">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="font-medium text-gray-900">Najlepsze miejsce</h3>
-          <div className="flex items-center">
-            {flightData.recommendation.sun_event === "sunrise" ? (
-              <Sunrise size={16} className="text-amber-500 mr-1" />
-            ) : (
-              <Sunset size={16} className="text-orange-500 mr-1" />
-            )}
-            <span className="text-sm text-gray-600">
-              {flightData.recommendation.sun_event === "sunrise"
-                ? "Wschód"
-                : "Zachód"}{" "}
-              {formatTime(flightData.recommendation.best_time)}
-            </span>
-          </div>
-        </div>
-
-        <div className="flex items-center mb-4">
-          <div className="w-14 h-14 bg-indigo-500 text-white rounded-lg flex items-center justify-center mr-4">
-            <span className="text-2xl font-bold">
-              {flightData.recommendation.seat_code}
-            </span>
-          </div>
-          <div>
-            <div className="font-medium">
-              {flightData.recommendation.seat_side}
+        <div className="p-6">
+          {/* Flight info */}
+          <div className="mb-6 flex items-center justify-between px-4 py-3 bg-gray-50 rounded-lg">
+            <div className="flex items-center">
+              <div className="text-gray-700">
+                <span className="font-medium">
+                  {formatTime(flightData.departure_time)}
+                </span>
+                <span className="mx-2 text-gray-400">—</span>
+                <span className="font-medium">
+                  {formatTime(flightData.arrival_time)}
+                </span>
+              </div>
             </div>
-            <div className="text-sm text-gray-600">
-              Kierunek lotu: {flightData.recommendation.flight_direction}
+
+            <div className="text-sm text-gray-500">
+              {flightData.flight_duration.toFixed(1)} hours
             </div>
           </div>
-        </div>
 
-        <div>
-          <div className="flex justify-between items-center mb-1">
-            <span className="text-sm text-gray-600">Jakość widoku</span>
-            <span className="font-medium">
-              {flightData.recommendation.quality_score.toFixed(0)}%
-            </span>
-          </div>
-          <div className="w-full h-1.5 bg-gray-200 rounded-full">
-            <div
-              className="h-full bg-indigo-500 rounded-full"
-              style={{ width: `${flightData.recommendation.quality_score}%` }}
-            ></div>
+          {/* Recommendation section */}
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-lg font-medium text-gray-800">Best Seat</h3>
+              <div className="flex items-center text-sm">
+                {flightData.recommendation.sun_event === "sunrise" ? (
+                  <Sunrise size={16} className="text-amber-500 mr-1.5" />
+                ) : (
+                  <Sunset size={16} className="text-orange-500 mr-1.5" />
+                )}
+                <span className="text-gray-600">
+                  {flightData.recommendation.sun_event === "sunrise"
+                    ? "Sunrise"
+                    : "Sunset"}{" "}
+                  {formatTime(flightData.recommendation.best_time)}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-center p-5 bg-gray-50 rounded-lg mb-6">
+              <div className="w-16 h-16 bg-indigo-600 text-white rounded-lg flex items-center justify-center mr-5">
+                <span className="text-xl font-bold">
+                  {flightData.recommendation.seat_code}
+                </span>
+              </div>
+              <div>
+                <div className="font-medium text-gray-800 mb-1">
+                  {flightData.recommendation.seat_side ===
+                  "lewa strona samolotu"
+                    ? "Left side of aircraft"
+                    : "Right side of aircraft"}
+                </div>
+                <div className="text-sm text-gray-500 flex items-center">
+                  <Plane size={14} className="mr-1.5" />
+                  Flight direction:{" "}
+                  {flightData.recommendation.flight_direction
+                    .replace("północny", "north")
+                    .replace("południowy", "south")
+                    .replace("wschodni", "east")
+                    .replace("zachodni", "west")}
+                </div>
+              </div>
+            </div>
+
+            {/* Quality score */}
+            <div className="mb-6">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-sm text-gray-600">View quality</span>
+                <div className="flex items-center">
+                  <span className="font-medium text-gray-800 mr-2">
+                    {flightData.recommendation.quality_score.toFixed(0)}%
+                  </span>
+                  {flightData.recommendation.quality_score >= 70 && (
+                    <span
+                      className={`text-xs px-2 py-0.5 rounded-full ${
+                        flightData.recommendation.quality_score >= 85
+                          ? "bg-green-100 text-green-700"
+                          : "bg-amber-100 text-amber-700"
+                      }`}
+                    >
+                      {getQualityLabel(flightData.recommendation.quality_score)}
+                    </span>
+                  )}
+                </div>
+              </div>
+              <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                <div
+                  className={`h-full ${getQualityClass(
+                    flightData.recommendation.quality_score
+                  )} rounded-full`}
+                  style={{
+                    width: `${flightData.recommendation.quality_score}%`,
+                  }}
+                ></div>
+              </div>
+            </div>
+
+            {/* Tip */}
+            <div className="bg-blue-50 rounded-lg p-4 mb-6 flex items-start border border-blue-100">
+              <AlertCircle
+                size={16}
+                className="text-blue-500 mr-3 mt-0.5 flex-shrink-0"
+              />
+              <div className="text-sm text-gray-700">
+                <p>
+                  Take seat {flightData.recommendation.seat_code} approximately
+                  15 minutes before the indicated time for the best viewing
+                  experience.
+                </p>
+              </div>
+            </div>
+
+            {/* Back button */}
+            <button
+              onClick={onSearchAgain}
+              className="flex items-center text-indigo-600 hover:text-indigo-800 transition-colors text-sm"
+            >
+              <ArrowLeft size={16} className="mr-1.5" />
+              Modify search parameters
+            </button>
           </div>
         </div>
       </div>
-
-      {/* Wskazówka */}
-      <div className="text-sm text-gray-600 mb-6">
-        <p>
-          Zajmij miejsce {flightData.recommendation.seat_code} około 15 minut
-          przed wskazanym czasem, aby nie przegapić najlepszego widoku.
-        </p>
-      </div>
-
-      {/* Przycisk powrotu */}
-      <button
-        onClick={onSearchAgain}
-        className="flex items-center text-indigo-600 font-medium hover:text-indigo-800 transition-colors"
-      >
-        <ArrowLeft size={16} className="mr-1" />
-        Zmień parametry wyszukiwania
-      </button>
     </div>
   );
 };
