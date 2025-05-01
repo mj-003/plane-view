@@ -11,7 +11,10 @@ class WeatherService:
     
     # Możesz użyć jednego z tych API - wybierz to, które preferujesz i uzyskaj klucz API
     OPENWEATHERMAP_API_KEY = os.getenv('OPENWEATHERMAP_API_KEY', '')
-    WEATHERAPI_KEY = os.getenv('WEATHERAPI_KEY', '')
+    # WEATHERAPI_KEY = os.getenv('WEATHERAPI_KEY', '')
+    WEATHERAPI_KEY = "9d1035aa7ee7449790c115750250105"
+
+    print(WEATHERAPI_KEY)
     
     @classmethod
     async def get_weather(cls, lat: float, lon: float, time_utc: datetime) -> Optional[Dict[str, Any]]:
@@ -26,15 +29,13 @@ class WeatherService:
         Returns:
             Słownik z danymi pogodowymi lub None w przypadku błędu
         """
+        print(f"WEATHERAPI_KEY: {cls.WEATHERAPI_KEY}")
+
         try:
-            # Najpierw spróbujmy użyć OpenWeatherMap
-            if cls.OPENWEATHERMAP_API_KEY:
-                weather_data = await cls._fetch_openweathermap(lat, lon, time_utc)
-                if weather_data:
-                    return weather_data
             
             # Jeśli OpenWeatherMap nie zadziałał, spróbujmy WeatherAPI
             if cls.WEATHERAPI_KEY:
+                print(cls.WEATHERAPI_KEY)
                 weather_data = await cls._fetch_weatherapi(lat, lon, time_utc)
                 if weather_data:
                     return weather_data
@@ -45,61 +46,6 @@ class WeatherService:
         except Exception as e:
             print(f"Błąd podczas pobierania danych pogodowych: {str(e)}")
             return cls._generate_default_weather(lat, lon, time_utc)
-    
-    @classmethod
-    async def _fetch_openweathermap(cls, lat: float, lon: float, time_utc: datetime) -> Optional[Dict[str, Any]]:
-        """Pobiera dane z OpenWeatherMap API"""
-        if not cls.OPENWEATHERMAP_API_KEY:
-            return None
-            
-        # Formatujemy czas jako timestamp Unix
-        timestamp = int(time_utc.timestamp())
-        
-        # Wybieramy odpowiednie API w zależności od tego, czy prognoza jest na przyszłość czy przeszłość
-        now = datetime.utcnow()
-        
-        try:
-            async with httpx.AsyncClient() as client:
-                if time_utc > now and (time_utc - now).days <= 7:
-                    # Prognoza na przyszłość (do 7 dni)
-                    url = f"https://api.openweathermap.org/data/2.5/onecall?lat={lat}&lon={lon}&exclude=minutely,hourly&appid={cls.OPENWEATHERMAP_API_KEY}&units=metric"
-                    response = await client.get(url)
-                    data = response.json()
-                    
-                    # Znajdź najbliższy dzień
-                    for daily in data.get('daily', []):
-                        day_time = datetime.fromtimestamp(daily['dt'])
-                        if day_time.date() == time_utc.date():
-                            return {
-                                "provider": "OpenWeatherMap",
-                                "clouds": daily.get('clouds', 0),  # % zachmurzenia
-                                "precipitation": daily.get('pop', 0) * 100,  # prawdopodobieństwo opadów w %
-                                "visibility": data.get('current', {}).get('visibility', 10000) / 1000,  # widoczność w km
-                                "temp": daily.get('temp', {}).get('day', 20),  # temperatura w °C
-                                "description": daily.get('weather', [{}])[0].get('description', 'brak danych'),
-                                "is_forecast": True
-                            }
-                elif time_utc <= now and (now - time_utc).days <= 5:
-                    # Dane historyczne (do 5 dni wstecz)
-                    url = f"https://api.openweathermap.org/data/2.5/onecall/timemachine?lat={lat}&lon={lon}&dt={timestamp}&appid={cls.OPENWEATHERMAP_API_KEY}&units=metric"
-                    response = await client.get(url)
-                    data = response.json()
-                    
-                    return {
-                        "provider": "OpenWeatherMap",
-                        "clouds": data.get('current', {}).get('clouds', 0),  # % zachmurzenia
-                        "precipitation": 0,  # brak danych o prawdopodobieństwie w danych historycznych
-                        "visibility": data.get('current', {}).get('visibility', 10000) / 1000,  # widoczność w km
-                        "temp": data.get('current', {}).get('temp', 20),  # temperatura w °C
-                        "description": data.get('current', {}).get('weather', [{}])[0].get('description', 'brak danych'),
-                        "is_forecast": False
-                    }
-                
-            return None
-                
-        except Exception as e:
-            print(f"Błąd podczas pobierania danych z OpenWeatherMap: {str(e)}")
-            return None
     
     @classmethod
     async def _fetch_weatherapi(cls, lat: float, lon: float, time_utc: datetime) -> Optional[Dict[str, Any]]:
@@ -232,6 +178,8 @@ class WeatherService:
         """
         weather = await cls.get_weather(lat, lon, time_utc)
         
+
+        
         # Oceń warunki
         viewing_score = 100  # Maksymalna ocena
         
@@ -283,3 +231,14 @@ class WeatherService:
             "quality_description": quality_description,
             "weather": weather
         }
+    
+
+if __name__ == "__main__":
+    import asyncio
+    test_lat = 50.47848910687199
+    test_lon = 8.890003465399879
+    test_time = datetime.utcnow()
+    print(test_time)
+    result = asyncio.run(WeatherService.evaluate_conditions_for_sun_viewing(test_lat, test_lon, test_time))
+    print(json.dumps(result, indent=2, ensure_ascii=False))
+

@@ -95,7 +95,14 @@ class FlightRouteService:
         
         # Pobierz dane pogodowe dla najlepszego punktu
         best_point = route_points[best_idx]
-        best_time = departure_time + timedelta(hours=best_point.time_from_departure)
+        # best_time = departure_time + timedelta(hours=best_point.time_from_departure)
+        best_time = preferred_events[0].event_time
+        print("#############")
+        print(preferred_events[0].event_time)
+
+        #best_time = best_sun.event_time
+        print("------------------------------------")
+        print(best_point.latitude, best_point.longitude, best_time)
         
         # Asynchronicznie pobierz dane pogodowe
         weather_conditions = await WeatherService.evaluate_conditions_for_sun_viewing(
