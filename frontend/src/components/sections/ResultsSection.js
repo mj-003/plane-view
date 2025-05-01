@@ -1,3 +1,4 @@
+// components/sections/ResultsSection.js
 import React from "react";
 import {
   Plane,
@@ -110,6 +111,12 @@ const ResultsSection = ({ flightData, onSearchAgain }) => {
     flightData.recommendation?.sun_event_times?.filter(
       (event) => event.event_type === "sunset" && event.is_visible_during_flight
     ) || [];
+
+  // Pobieramy rzeczywisty czas wschodu/zachodu słońca
+  const actualSunriseTime =
+    visibleSunrises.length > 0 ? visibleSunrises[0].event_time : null;
+  const actualSunsetTime =
+    visibleSunsets.length > 0 ? visibleSunsets[0].event_time : null;
 
   return (
     <div className="w-full max-w-3xl mx-auto px-6 py-16">
@@ -247,12 +254,10 @@ const ResultsSection = ({ flightData, onSearchAgain }) => {
                 <div className="text-xs text-gray-600 text-center max-w-xs">
                   {flightData.recommendation.sun_event === "sunrise"
                     ? `Wschód słońca o ${formatTime(
-                        visibleSunrises[0]?.event_time ||
-                          flightData.recommendation.best_time
+                        actualSunriseTime || flightData.recommendation.best_time
                       )}`
                     : `Zachód słońca o ${formatTime(
-                        visibleSunsets[0]?.event_time ||
-                          flightData.recommendation.best_time
+                        actualSunsetTime || flightData.recommendation.best_time
                       )}`}
                 </div>
               </div>
@@ -275,7 +280,11 @@ const ResultsSection = ({ flightData, onSearchAgain }) => {
                   {flightData.recommendation.sun_event === "sunrise"
                     ? "Wschód słońca"
                     : "Zachód słońca"}{" "}
-                  {formatTime(flightData.recommendation.best_time)}
+                  {formatTime(
+                    flightData.recommendation.sun_event === "sunrise"
+                      ? actualSunriseTime || flightData.recommendation.best_time
+                      : actualSunsetTime || flightData.recommendation.best_time
+                  )}
                 </span>
               </div>
             </div>
@@ -389,19 +398,6 @@ const ResultsSection = ({ flightData, onSearchAgain }) => {
               </div>
             </div>
 
-            {/* Additional notes */}
-            {flightData.recommendation.recommendation_notes && (
-              <div className="bg-blue-50 rounded-lg p-4 mb-6 flex items-start border border-blue-100">
-                <AlertCircle
-                  size={16}
-                  className="text-blue-500 mr-3 mt-0.5 flex-shrink-0"
-                />
-                <div className="text-sm text-gray-700">
-                  <p>{flightData.recommendation.recommendation_notes}</p>
-                </div>
-              </div>
-            )}
-
             {/* No sun events visible warning */}
             {!flightData.sun_events_visible && (
               <div className="bg-yellow-50 rounded-lg p-4 mb-6 flex items-start border border-yellow-200">
@@ -428,10 +424,9 @@ const ResultsSection = ({ flightData, onSearchAgain }) => {
               />
               <div className="text-sm text-gray-700">
                 <p>
-                  Zajmij miejsce {flightData.recommendation.seat_code} około 15
-                  minut przed wskazanym czasem, aby cieszyć się najlepszym
-                  widokiem. Nie zapomnij zabrać aparatu lub telefonu, aby
-                  uchwycić ten moment!
+                  Zajmij miejsce {flightData.recommendation.seat_code}, aby
+                  cieszyć się najlepszym widokiem. Nie zapomnij zabrać aparatu
+                  lub telefonu, aby uchwycić ten moment!
                 </p>
               </div>
             </div>

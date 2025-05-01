@@ -53,6 +53,9 @@ class FlightRouteService:
         
         return route_points
     
+    # Zmodyfikowana część metody get_seat_recommendation_async w flight.py
+    # Zmiana: Dodano pobieranie faktycznych czasów wschodu/zachodu słońca z API pogodowego
+
     async def get_seat_recommendation_async(self, request: FlightRequest) -> FlightResponse:
         """
         Asynchroniczna wersja metody do generowania rekomendacji miejsc
@@ -82,7 +85,7 @@ class FlightRouteService:
         
         # Sprawdź, czy preferowane wydarzenie jest widoczne
         preferred_events = [e for e in sun_events 
-                          if e.event_type == request.sun_preference and e.is_visible_during_flight]
+                        if e.event_type == request.sun_preference and e.is_visible_during_flight]
         
         sun_events_visible = len(preferred_events) > 0
         
@@ -95,14 +98,7 @@ class FlightRouteService:
         
         # Pobierz dane pogodowe dla najlepszego punktu
         best_point = route_points[best_idx]
-        # best_time = departure_time + timedelta(hours=best_point.time_from_departure)
-        best_time = preferred_events[0].event_time
-        print("#############")
-        print(preferred_events[0].event_time)
-
-        #best_time = best_sun.event_time
-        print("------------------------------------")
-        print(best_point.latitude, best_point.longitude, best_time)
+        best_time = departure_time + timedelta(hours=best_point.time_from_departure)
         
         # Asynchronicznie pobierz dane pogodowe
         weather_conditions = await WeatherService.evaluate_conditions_for_sun_viewing(
@@ -110,7 +106,95 @@ class FlightRouteService:
             best_point.longitude,
             best_time
         )
+
+        print(":::::::::")
+        print(weather_conditions)
         
+       # Poprawiona wersja kodu do aktualizacji czasów wschodu/zachodu słońca
+
+        # Aktualizuj wydarzenia słoneczne na podstawie danych z API pogodowego
+        updated_sun_events = []
+
+        # Sprawdź, czy mamy rzeczywiste czasy wschodu/zachodu słońca z API pogodowego
+        api_sun_times = weather_conditions.get("sun_times", {})
+
+        # Usuń stare wydarzenia i dodaj nowe na podstawie danych z API
+        if request.sun_preference == "sunrise" and api_sun_times.get("sunrise"):
+            sunrise_time = datetime.fromisoformat(api_sun_times["sunrise"])
+            # Sprawdź, czy czas jest w zakresie lotu
+            if departure_time <= sunrise_time <= (departure_time + timedelta(hours=route_points[-1].time_from_departure)):
+                # Tworzenie nowego obiektu SunEventTime zamiast modyfikacji istniejącego
+                updated_sun_events.append(SunEventTime(
+                    event_type="sunrise",
+                    event_time=sunrise_time,
+                    is_visible_during_flight=True,
+                    event_location={
+                        "latitude": best_point.latitude,
+                        "longitude": best_point.longitude
+                    }
+                ))
+                # Aktualizuj best_time
+                best_time = sunrise_time
+
+        if request.sun_preference == "sunset" and api_sun_times.get("sunset"):
+            sunset_time = datetime.fromisoformat(api_sun_times["sunset"])
+            # Sprawdź, czy czas jest w zakresie lotu
+            if departure_time <= sunset_time <= (departure_time + timedelta(hours=route_points[-1].time_from_departure)):
+                # Tworzenie nowego obiektu SunEventTime zamiast modyfikacji istniejącego
+                updated_sun_events.append(SunEventTime(
+                    event_type="sunset",
+                    event_time=sunset_time,
+                    is_visible_during_flight=True,
+                    event_location={
+                        "latitude": best_point.latitude,
+                        "longitude": best_point.longitude
+                    }
+                ))
+                # Aktualizuj best_time
+                best_time = sunset_time
+
+        # Jeśli mamy wydarzenia z API, zastąp oryginalne wydarzenia
+        if updated_sun_events:
+            sun_events = updated_sun_events
+        elif not sun_events and api_sun_times:
+            # Jeśli nie mamy wydarzeń z obliczeń, ale mamy dane z API,
+            # dodaj wydarzenia na podstawie danych API dla obu typów
+            if api_sun_times.get("sunrise"):
+                sunrise_time = datetime.fromisoformat(api_sun_times["sunrise"])
+                if departure_time <= sunrise_time <= (departure_time + timedelta(hours=route_points[-1].time_from_departure)):
+                    sun_events.append(SunEventTime(
+                        event_type="sunrise",
+                        event_time=sunrise_time,
+                        is_visible_during_flight=True,
+                        event_location={
+                            "latitude": best_point.latitude,
+                            "longitude": best_point.longitude
+                        }
+                    ))
+            
+            if api_sun_times.get("sunset"):
+                sunset_time = datetime.fromisoformat(api_sun_times["sunset"])
+                if departure_time <= sunset_time <= (departure_time + timedelta(hours=route_points[-1].time_from_departure)):
+                    sun_events.append(SunEventTime(
+                        event_type="sunset",
+                        event_time=sunset_time,
+                        is_visible_during_flight=True,
+                        event_location={
+                            "latitude": best_point.latitude,
+                            "longitude": best_point.longitude
+                        }
+                    ))
+
+        # Zaktualizuj, czy preferowane wydarzenie jest widoczne
+        preferred_events = [e for e in sun_events 
+                        if e.event_type == request.sun_preference and e.is_visible_during_flight]
+
+        sun_events_visible = len(preferred_events) > 0
+
+        # Ustaw best_time na podstawie preferowanego wydarzenia, jeśli jest dostępne
+        if preferred_events:
+            best_time = preferred_events[0].event_time
+                
         # Oblicz czas przylotu i czas trwania lotu
         flight_duration = route_points[-1].time_from_departure
         arrival_time = departure_time + timedelta(hours=flight_duration)
@@ -204,7 +288,7 @@ class FlightRouteService:
             response.aircraft_model = aircraft_model
         
         return response
-    
+        
     # def get_seat_recommendation(self, request: FlightRequest) -> FlightResponse:
     #     """
     #     Główna metoda do generowania rekomendacji miejsc.
