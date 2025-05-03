@@ -55,7 +55,7 @@ const SunFlight = () => {
     }
   };
 
-  // Handle form submission
+  // Handle form submission with loading animation
   const handleSubmit = async (formData) => {
     if (!formData.departureAirport || !formData.arrivalAirport) return;
 
@@ -64,7 +64,16 @@ const SunFlight = () => {
     setError(null);
 
     try {
+      // Artificial delay to show the loading animation for longer (min 2 seconds)
+      const startTime = Date.now();
       const response = await fetchSeatRecommendation(formData);
+
+      // Ensure loading is shown for at least 2 seconds
+      const elapsedTime = Date.now() - startTime;
+      if (elapsedTime < 2000) {
+        await new Promise((resolve) => setTimeout(resolve, 2000 - elapsedTime));
+      }
+
       setResults(response);
       changeStep(3); // Show results
       scrollToResults();
@@ -132,28 +141,19 @@ const SunFlight = () => {
             }`}
           >
             <div className="w-full max-w-xl px-4">
-              <div className="rounded-xl overflow-hidden shadow bg-white border border-gray-50 py-20 px-8">
-                <div className="text-center">
-                  <div className="relative mx-auto w-20 h-20 mb-10">
-                    <div className="absolute w-full h-full rounded-full border-4 border-gray-100"></div>
-                    <div className="absolute w-full h-full rounded-full border-t-4 border-amber-500 animate-spin"></div>
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <Plane className="w-10 h-10 text-gray-300 rotate-45 animate-pulse" />
-                    </div>
-                    <div className="absolute -right-3 -top-3 w-8 h-8">
-                      <div className="absolute w-8 h-8 rounded-full bg-amber-50 animate-ping opacity-75"></div>
-                      <Sun className="absolute inset-0 w-8 h-8 text-amber-500 z-10" />
-                    </div>
-                  </div>
-
-                  <h3 className="text-lg font-light mb-3">
-                    Analyzing flight path
-                  </h3>
-                  <p className="text-sm text-gray-400 max-w-sm mx-auto">
-                    Calculating sun position along the route and finding the
-                    best seat for your view
-                  </p>
+              <div className="text-center py-16">
+                {/* Uproszczona animacja */}
+                <div className="sun-loader">
+                  <div className="sun-glow"></div>
+                  <Sun className="sun-icon" size={48} />
                 </div>
+
+                <h3 className="text-lg font-light mb-3">
+                  Analyzing flight path
+                </h3>
+                <p className="text-sm text-gray-400 max-w-sm mx-auto">
+                  Calculating sun position along the route
+                </p>
               </div>
             </div>
           </div>

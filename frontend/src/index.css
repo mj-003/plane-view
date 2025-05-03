@@ -1,0 +1,46 @@
+/* Animacja słońca - zawsze okrągła */
+.sun-loader {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 80px;
+  width: 80px;
+  margin: 0 auto 2rem auto;
+}
+
+.sun-icon {
+  color: #f59e0b;
+  animation: breathe 1.5s ease-in-out infinite alternate;
+  z-index: 10;
+}
+
+.sun-glow {
+  position: absolute;
+  background-color: #fef3c7;
+  border-radius: 50%;
+  width: 48px;
+  height: 48px;
+  opacity: 0.3;
+  animation: glow 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes breathe {
+  from {
+    transform: scale(0.95);
+  }
+  to {
+    transform: scale(1.05);
+  }
+}
+
+@keyframes glow {
+  from {
+    transform: scale(1);
+    opacity: 0.2;
+  }
+  to {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
