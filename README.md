@@ -8,11 +8,11 @@ https://github.com/user-attachments/assets/40329c34-196d-4feb-b7e3-9e7ea705db1b
 
 ## Features
 
-Flight Route Analysis: Calculate the optimal flight path considering Earth's curvature
-Sun Position Tracking: Determine sunrise and sunset times along your route
-Weather Integration: Check cloud coverage and visibility conditions
-Seat Recommendations: Get specific seat recommendations based on aircraft type
-Visual Interface: User-friendly design with intuitive flight visualization
+- **Flight Route Analysis**: Calculate the optimal flight path considering Earth's curvature
+- **Sun Position Tracking**: Determine sunrise and sunset times along your route
+- **Weather Integration**: Check cloud coverage and visibility conditions
+- **Seat Recommendations**: Get specific seat recommendations 
+- **Visual Interface**: User-friendly design with intuitive flight visualization
 
 ## How It Works
 
