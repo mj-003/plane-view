@@ -3,7 +3,10 @@ SunFlight is a web application that helps air travelers find the ideal seat on t
 
 ## Demo
 
-https://github.com/user-attachments/assets/40329c34-196d-4feb-b7e3-9e7ea705db1b
+
+https://github.com/user-attachments/assets/737abe55-9093-4c24-8c5c-89a638d56dfb
+
+
 
 
 ## Features
