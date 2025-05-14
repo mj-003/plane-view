@@ -55,7 +55,6 @@ const ImprovedLayoutResultsView = ({ flightData, onSearchAgain }) => {
           </p>
 
           <div className="bg-white rounded-lg p-6 shadow-sm">
-            {/* Flight Details - Keep this part you liked */}
             <div className="flex justify-center items-center gap-10 mb-6">
               <div className="text-center">
                 <div className="text-2xl font-medium">
@@ -214,7 +213,7 @@ const ImprovedLayoutResultsView = ({ flightData, onSearchAgain }) => {
                 {flightData.recommendation.sun_event === "sunrise"
                   ? "Sunrise"
                   : "Sunset"}{" "}
-                may not be fully visible during your flight
+                may not be visible during your flight
               </div>
             )}
 

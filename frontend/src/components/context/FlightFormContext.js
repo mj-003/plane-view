@@ -1,15 +1,14 @@
 // context/FlightFormContext.js
 import React, { createContext, useState, useContext, useEffect } from "react";
 
-// Utworzenie kontekstu
 const FlightFormContext = createContext();
 
-// Hook do łatwego używania kontekstu
+// Hook for easy context usage
 export const useFlightForm = () => useContext(FlightFormContext);
 
-// Provider kontekstu
+// Context Provider
 export const FlightFormProvider = ({ children }) => {
-  // Stany formularza
+  // Form states
   const [departureAirport, setDepartureAirport] = useState("");
   const [arrivalAirport, setArrivalAirport] = useState("");
   const [departureDate, setDepartureDate] = useState("");
@@ -19,7 +18,7 @@ export const FlightFormProvider = ({ children }) => {
   const [results, setResults] = useState(null);
   const [formErrors, setFormErrors] = useState({});
 
-  // Inicjalizacja daty i czasu
+  // Initialize date and time
   useEffect(() => {
     const today = new Date();
     const formattedDate = today.toISOString().split("T")[0];
@@ -30,26 +29,26 @@ export const FlightFormProvider = ({ children }) => {
     setDepartureTime(`${hours}:${minutes}`);
   }, []);
 
-  // Walidacja formularza
+  // Form validation
   const validateForm = () => {
     const errors = {};
 
-    if (!departureAirport) errors.departureAirport = "Wybierz lotnisko wylotu";
-    if (!arrivalAirport) errors.arrivalAirport = "Wybierz lotnisko przylotu";
-    if (!departureDate) errors.departureDate = "Wybierz datę wylotu";
-    if (!departureTime) errors.departureTime = "Wybierz czas wylotu";
+    if (!departureAirport) errors.departureAirport = "Choose departure airport";
+    if (!arrivalAirport) errors.arrivalAirport = "Choose arrival airport";
+    if (!departureDate) errors.departureDate = "Choose departure date";
+    if (!departureTime) errors.departureTime = "Choose departure time";
 
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
 
-  // Symulacja wysłania formularza
+  // Form submission simulation
   const handleSubmit = () => {
     if (!validateForm()) return;
 
     setSearching(true);
 
-    // Symulacja odpowiedzi z API
+    // API response simulation
     setTimeout(() => {
       setResults({
         departure_airport: {
@@ -77,13 +76,13 @@ export const FlightFormProvider = ({ children }) => {
         flight_duration: 2.3,
         recommendation: {
           seat_code: "A15",
-          seat_side: "lewa strona samolotu",
+          seat_side: "left side of the aircraft",
           best_time: `${departureDate}T${
             parseInt(departureTime.split(":")[0]) + 1
           }:${departureTime.split(":")[1]}:00`,
           sun_event: sunPreference,
           quality_score: 87.5,
-          flight_direction: "zachodni",
+          flight_direction: "western",
         },
       });
 
@@ -105,7 +104,7 @@ export const FlightFormProvider = ({ children }) => {
     setFormErrors({});
   };
 
-  // Wartość kontekstu
+  // Context value
   const value = {
     departureAirport,
     setDepartureAirport,

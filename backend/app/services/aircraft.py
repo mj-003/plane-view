@@ -4,7 +4,6 @@ from typing import Dict, List, Any, Optional
 class AircraftService:
     """Serwis do obsługi informacji o samolotach"""
     
-    # Dane o typowych układach siedzeń w samolotach
     _aircraft_data = {
         "B737": {
             "name": "Boeing 737",
@@ -42,16 +41,13 @@ class AircraftService:
             "middle_seats": ["B", "E", "F", "J"],
             "typical_airlines": ["Lufthansa", "Qatar Airways", "Singapore Airlines"]
         }
-        # Można dodać więcej modeli samolotów
     }
     
-    # Mapowanie linii lotniczych do typowych samolotów
     _airline_aircraft = {
         "LO": {"short_haul": ["B737", "E195"], "long_haul": ["B787"]},
         "LH": {"short_haul": ["A320", "A321"], "long_haul": ["A350", "B747"]},
         "FR": {"short_haul": ["B737"], "long_haul": []},
         "W6": {"short_haul": ["A320", "A321"], "long_haul": []},
-        # Można dodać więcej linii lotniczych
     }
     
     @classmethod
@@ -81,20 +77,18 @@ class AircraftService:
         Returns:
             Kod prawdopodobnego modelu samolotu
         """
-        # Określ, czy to lot długodystansowy
+        # czy to lot długodystansowy
         is_long_haul = distance_km > 3000
         
-        # Pobierz samoloty dla tej linii
+        # samoloty dla tej linii
         aircraft_options = cls.get_airline_aircraft(airline_code, is_long_haul)
         
-        # Jeśli brak danych lub brak samolotów, użyj domyślnych wartości
         if not aircraft_options:
             if is_long_haul:
                 return "B787"  # Typowy samolot długodystansowy
             else:
                 return "B737"  # Typowy samolot krótkodystansowy
         
-        # Wybierz pierwszy samolot z listy (najpopularniejszy)
         return aircraft_options[0]
     
     @classmethod

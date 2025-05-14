@@ -9,9 +9,6 @@ import os
 class WeatherService:
     """Serwis do pobierania danych pogodowych wzdłuż trasy lotu"""
     
-    # Możesz użyć jednego z tych API - wybierz to, które preferujesz i uzyskaj klucz API
-    OPENWEATHERMAP_API_KEY = os.getenv('OPENWEATHERMAP_API_KEY', '')
-    # WEATHERAPI_KEY = os.getenv('WEATHERAPI_KEY', '')
     WEATHERAPI_KEY = "9d1035aa7ee7449790c115750250105"
 
     print(WEATHERAPI_KEY)
@@ -32,14 +29,12 @@ class WeatherService:
         print(f"WEATHERAPI_KEY: {cls.WEATHERAPI_KEY}")
 
         try:
-            # Jeśli OpenWeatherMap nie zadziałał, spróbujmy WeatherAPI
             if cls.WEATHERAPI_KEY:
                 print(cls.WEATHERAPI_KEY)
                 weather_data = await cls._fetch_weatherapi(lat, lon, time_utc)
                 if weather_data:
                     return weather_data
             
-            # Jeśli żadne API nie zadziałało lub nie mamy kluczy, zwróć domyślne dane
             return cls._generate_default_weather(lat, lon, time_utc)
             
         except Exception as e:
@@ -61,7 +56,6 @@ class WeatherService:
         """
         try:
             if cls.WEATHERAPI_KEY:
-                # Formatujemy datę zgodnie z wymaganiami API
                 date_str = date_utc.strftime('%Y-%m-%d')
                 
                 async with httpx.AsyncClient() as client:
@@ -72,11 +66,9 @@ class WeatherService:
                         data = response.json()
                         astronomy = data.get('astronomy', {}).get('astro', {})
                         
-                        # API zwraca godziny w formacie "HH:MM AM/PM"
                         sunrise_str = astronomy.get('sunrise')
                         sunset_str = astronomy.get('sunset')
                         
-                        # Konwertuj stringi na obiekty datetime
                         if sunrise_str and sunset_str:
                             sunrise_time = cls._parse_time_12h(sunrise_str, date_utc)
                             sunset_time = cls._parse_time_12h(sunset_str, date_utc)
@@ -86,7 +78,6 @@ class WeatherService:
                                 "sunset": sunset_time
                             }
             
-            # Jeśli API nie zadziałało, zwróć domyślne wartości
             return cls._generate_default_sun_times(lat, lon, date_utc)
             
         except Exception as e:
@@ -97,7 +88,6 @@ class WeatherService:
     def _parse_time_12h(cls, time_str: str, date: datetime) -> datetime:
         """Parsuje czas w formacie 12-godzinnym (HH:MM AM/PM) i łączy z datą"""
         try:
-            # Oczekujemy formatu typu "06:20 AM" lub "07:15 PM"
             time_parts = time_str.split()
             if len(time_parts) != 2:
                 raise ValueError(f"Nieprawidłowy format czasu: {time_str}")
@@ -109,7 +99,6 @@ class WeatherService:
             hour = int(hour_min[0])
             minute = int(hour_min[1])
             
-            # Konwersja AM/PM
             if time_parts[1].upper() == 'PM' and hour < 12:
                 hour += 12
             elif time_parts[1].upper() == 'AM' and hour == 12:
@@ -121,7 +110,6 @@ class WeatherService:
             )
         except Exception as e:
             print(f"Błąd parsowania czasu '{time_str}': {str(e)}")
-            # Domyślne wartości
             if 'AM' in time_str:
                 return datetime(date.year, date.month, date.day, 6, 0, 0, tzinfo=date.tzinfo)
             else:
@@ -133,7 +121,6 @@ class WeatherService:
         if not cls.WEATHERAPI_KEY:
             return None
             
-        # Formatujemy datę zgodnie z wymaganiami API
         date_str = time_utc.strftime('%Y-%m-%d')
         
         try:
@@ -142,7 +129,6 @@ class WeatherService:
                 response = await client.get(url)
                 data = response.json()
                 
-                # Sprawdzamy czy mamy dane dla żądanego dnia
                 forecast_day = None
                 for day in data.get('forecast', {}).get('forecastday', []):
                     if day['date'] == date_str:
@@ -150,7 +136,6 @@ class WeatherService:
                         break
                 
                 if forecast_day:
-                    # Znajdź najbliższą godzinę w danych godzinowych
                     target_hour = time_utc.hour
                     hour_data = None
                     
@@ -161,12 +146,10 @@ class WeatherService:
                             break
                     
                     if hour_data:
-                        # Pobierz także dane astronomiczne (wschód/zachód słońca)
                         astro_data = forecast_day.get('astro', {})
                         sunrise_str = astro_data.get('sunrise')
                         sunset_str = astro_data.get('sunset')
                         
-                        # Parsuj czasy wschodu/zachodu
                         sunrise_time = None
                         sunset_time = None
                         
@@ -184,10 +167,10 @@ class WeatherService:
                         
                         return {
                             "provider": "WeatherAPI",
-                            "clouds": hour_data.get('cloud', 0),  # % zachmurzenia
-                            "precipitation": hour_data.get('chance_of_rain', 0),  # prawdopodobieństwo opadów w %
-                            "visibility": hour_data.get('vis_km', 10),  # widoczność w km
-                            "temp": hour_data.get('temp_c', 20),  # temperatura w °C
+                            "clouds": hour_data.get('cloud', 0),  
+                            "precipitation": hour_data.get('chance_of_rain', 0),  
+                            "visibility": hour_data.get('vis_km', 10),  
+                            "temp": hour_data.get('temp_c', 20),  
                             "description": hour_data.get('condition', {}).get('text', 'brak danych'),
                             "is_forecast": True,
                             "sunrise_time": sunrise_time.isoformat() if sunrise_time else None,
@@ -206,27 +189,23 @@ class WeatherService:
         Generuje domyślne dane pogodowe, gdy API nie są dostępne.
         Implementuje proste reguły bazujące na lokalizacji i porze roku.
         """
-        # Określ porę roku na podstawie miesiąca (dla półkuli północnej)
         month = time_utc.month
         is_summer = 5 <= month <= 8
         is_winter = month in [12, 1, 2]
         
-        # Szerokość geograficzna determinuje klimat (uproszczenie)
         is_tropical = -23.5 <= lat <= 23.5
         is_polar = abs(lat) >= 66.5
         is_temperate = not is_tropical and not is_polar
         
-        # Domyślne wartości bazujące na powyższych czynnikach
-        clouds = 30  # domyślne zachmurzenie 30%
-        precipitation = 20  # domyślne prawdopodobieństwo opadów 20%
-        visibility = 10  # domyślna widoczność 10 km
-        temp = 20  # domyślna temperatura 20°C
-        description = "partly cloudy"  # domyślny opis
+        clouds = 30  
+        precipitation = 20  
+        visibility = 10 
+        temp = 20  
+        description = "partly cloudy"  
         
-        # Modyfikacje na podstawie pory roku i klimatu
         if is_tropical:
             temp = 28
-            if 6 <= month <= 9:  # pora deszczowa w wielu regionach tropikalnych
+            if 6 <= month <= 9:  
                 clouds = 70
                 precipitation = 60
                 visibility = 5
@@ -251,17 +230,15 @@ class WeatherService:
                 precipitation = 40
                 description = "snow or rain"
                 
-        # Dodatkowe modyfikacje na podstawie godziny
         hour = time_utc.hour
-        if 5 <= hour <= 8:  # poranek
-            clouds = max(10, clouds - 20)  # zwykle mniej chmur rano
-            visibility = min(15, visibility + 2)  # lepsza widoczność rano
+        if 5 <= hour <= 8:  
+            clouds = max(10, clouds - 20)  
+            visibility = min(15, visibility + 2)  
             description = "morning " + description
-        elif 18 <= hour <= 20:  # wieczór
-            clouds = min(90, clouds + 10)  # zwykle więcej chmur wieczorem
+        elif 18 <= hour <= 20: 
+            clouds = min(90, clouds + 10)  
             description = "evening " + description
         
-        # Wygeneruj domyślne czasy wschodu/zachodu słońca
         sunrise_sunset = cls._generate_default_sun_times(lat, lon, time_utc)
             
         return {
@@ -282,33 +259,26 @@ class WeatherService:
         Generuje domyślne czasy wschodu i zachodu słońca na podstawie lokalizacji i daty.
         Jest to bardzo uproszczone - w rzeczywistym projekcie należałoby użyć dokładniejszych obliczeń.
         """
-        # Zgrubne przybliżenie czasów wschodu/zachodu na podstawie szerokości geograficznej i pory roku
         
-        # Baza dla średnich szerokości geograficznych (np. Europa Środkowa)
         base_sunrise_hour = 6  # 6:00 rano
         base_sunset_hour = 18  # 18:00 wieczorem
         
-        # Korekta na podstawie pory roku
         month = date_utc.month
         
         # Lato (dni dłuższe)
         if 4 <= month <= 9:
-            # Na półkuli północnej lato = wcześniejszy wschód, późniejszy zachód
             if lat > 0:
                 base_sunrise_hour = max(4, base_sunrise_hour - (month - 3) // 2)
                 base_sunset_hour = min(22, base_sunset_hour + (month - 3) // 2)
-            # Na półkuli południowej odwrotnie
             else:
                 base_sunrise_hour = min(8, base_sunrise_hour + (month - 3) // 2)
                 base_sunset_hour = max(16, base_sunset_hour - (month - 3) // 2)
         # Zima (dni krótsze)
         else:
-            # Na półkuli północnej zima = późniejszy wschód, wcześniejszy zachód
             if lat > 0:
                 month_offset = month if month <= 2 else (month - 12)
                 base_sunrise_hour = min(8, base_sunrise_hour - month_offset // 2)
                 base_sunset_hour = max(16, base_sunset_hour + month_offset // 2)
-            # Na półkuli południowej odwrotnie
             else:
                 month_offset = month if month <= 2 else (month - 12)
                 base_sunrise_hour = max(4, base_sunrise_hour + month_offset // 2)
@@ -326,12 +296,9 @@ class WeatherService:
                 base_sunrise_hour = min(10, base_sunrise_hour + 2)
                 base_sunset_hour = max(14, base_sunset_hour - 2)
         
-        # Korekta na podstawie długości geograficznej (przybliżenie)
-        # Dla uproszczenia przyjmujemy, że UTC jest na długości 0°
-        # i każde 15° to 1 godzina różnicy
+        
         lon_hour_offset = round(lon / 15)
         
-        # Utwórz obiekty datetime
         sunrise_time = datetime(
             date_utc.year, date_utc.month, date_utc.day,
             (base_sunrise_hour + lon_hour_offset) % 24, 0, 0,
@@ -359,32 +326,27 @@ class WeatherService:
         """
         weather = await cls.get_weather(lat, lon, time_utc)
         
-        # Pobierz czasy wschodu/zachodu słońca dla tej lokalizacji i daty
         sun_times = await cls.get_sun_events(lat, lon, time_utc)
         print("*******suntimes")
         print(sun_times)
         
-        # Dodaj czasy do danych pogodowych, jeśli nie zostały już dodane przez API
         if "sunrise_time" not in weather and "sunrise" in sun_times:
             weather["sunrise_time"] = sun_times["sunrise"].isoformat()
         if "sunset_time" not in weather and "sunset" in sun_times:
             weather["sunset_time"] = sun_times["sunset"].isoformat()
         
-        # Oceń warunki
-        viewing_score = 100  # Maksymalna ocena
+        viewing_score = 100 
         
-        # Zachmurzenie jest najważniejszym czynnikiem
         clouds = weather.get('clouds', 0)
         if clouds > 80:
-            viewing_score -= 70  # Bardzo duże zachmurzenie
+            viewing_score -= 70 
         elif clouds > 60:
-            viewing_score -= 50  # Duże zachmurzenie
+            viewing_score -= 50 
         elif clouds > 40:
-            viewing_score -= 30  # Średnie zachmurzenie
+            viewing_score -= 30  
         elif clouds > 20:
-            viewing_score -= 10  # Niewielkie zachmurzenie
+            viewing_score -= 10  
             
-        # Opady zmniejszają widoczność
         precipitation = weather.get('precipitation', 0)
         if precipitation > 80:
             viewing_score -= 40
@@ -393,7 +355,6 @@ class WeatherService:
         elif precipitation > 30:
             viewing_score -= 15
             
-        # Widoczność
         visibility = weather.get('visibility', 10)
         if visibility < 1:
             viewing_score -= 50
@@ -402,10 +363,8 @@ class WeatherService:
         elif visibility < 8:
             viewing_score -= 10
             
-        # Zapewnij, że ocena jest w zakresie 0-100
         viewing_score = max(0, min(100, viewing_score))
         
-        # Utwórz opis jakości warunków
         quality_description = "doskonałe"
         if viewing_score < 20:
             quality_description = "bardzo złe"

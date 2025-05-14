@@ -26,7 +26,6 @@ class AirportService:
                 cls._airports[airport.code] = airport
         except Exception as e:
             print(f"Błąd podczas ładowania lotnisk: {e}")
-            # W wersji produkcyjnej użyj logowania zamiast print
     
     @classmethod
     def get_airport(cls, code: str) -> Optional[AirportBase]:
@@ -54,5 +53,4 @@ class AirportService:
         
         return results
 
-# Załaduj lotniska przy starcie aplikacji
 AirportService.load_airports()

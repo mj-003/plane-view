@@ -219,7 +219,7 @@ const FinalSearchForm = ({ onSubmit, searching }) => {
               <label className="block text-sm font-light text-gray-500 mb-2">
                 Preference
               </label>
-              <div className="flex gap-3">
+              <div className="flex gap-0">
                 <button
                   type="button"
                   onClick={() =>
@@ -228,7 +228,7 @@ const FinalSearchForm = ({ onSubmit, searching }) => {
                       sunPreference: "sunrise",
                     }))
                   }
-                  className={`flex-1 py-2.5 px-3 rounded-md transition-colors ${
+                  className={`flex-1 py-2.5 px-3 rounded-l-full rounded-r-none transition-colors ${
                     flightDetails.sunPreference === "sunrise"
                       ? "bg-gray-100 text-gray-800"
                       : "bg-white border border-gray-200 text-gray-500"
@@ -255,7 +255,7 @@ const FinalSearchForm = ({ onSubmit, searching }) => {
                       sunPreference: "sunset",
                     }))
                   }
-                  className={`flex-1 py-2.5 px-3 rounded-md transition-colors ${
+                  className={`flex-1 py-2.5 px-3 rounded-r-full rounded-l-none transition-colors ${
                     flightDetails.sunPreference === "sunset"
                       ? "bg-gray-100 text-gray-800"
                       : "bg-white border border-gray-200 text-gray-500"

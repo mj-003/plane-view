@@ -31,23 +31,23 @@ class FlightRouteCalculator:
         Returns:
             Lista punktów trasy z pozycją, czasem i wysokością
         """
-        # Oblicz odległość lotu po wielkim kole
+        # odległość lotu po wielkim kole
         distance_km = self._haversine_distance(dep_lat, dep_lon, arr_lat, arr_lon)
         
-        # Oblicz całkowity czas lotu
+        # całkowity czas lotu
         flight_time_hours = self._estimate_flight_time(distance_km)
         
-        # Oblicz czas wznoszenia i opadania
+        # czas wznoszenia i opadania
         climb_time_hours = self.typical_cruise_altitude / (self.climb_rate * 3600)
         descent_time_hours = self.typical_cruise_altitude / (self.descent_rate * 3600)
         cruise_time_hours = flight_time_hours - climb_time_hours - descent_time_hours
         
-        # Oblicz dystans pokonany podczas wznoszenia i opadania
+        # dystans pokonany podczas wznoszenia i opadania
         climb_distance = (climb_time_hours * self.typical_cruise_speed) / 2  # średnia prędkość podczas wznoszenia
         descent_distance = (descent_time_hours * self.typical_cruise_speed) / 2  # średnia prędkość podczas opadania
         cruise_distance = distance_km - climb_distance - descent_distance
         
-        # Generuj punkty trasy
+        # punkty trasy
         route_points = []
         
         for i in range(steps + 1):
@@ -124,7 +124,7 @@ class FlightRouteCalculator:
         Returns:
             Szacowany czas lotu w godzinach
         """
-        # Dodajemy stały czas na operacje naziemne (kołowanie itp.)
+        # stały czas na operacje naziemne (kołowanie itp.)
         ground_operations_time = 0.5  # godziny
         
         # Czas lotu = odległość / prędkość

@@ -142,7 +142,6 @@ const SunFlight = () => {
           >
             <div className="w-full max-w-xl px-4">
               <div className="text-center py-16">
-                {/* Uproszczona animacja */}
                 <div className="sun-loader">
                   <div className="sun-glow"></div>
                   <Sun className="sun-icon" size={48} />
